@@ -49,6 +49,11 @@ int receive_and_send_message(int sock, struct sockaddr_in6 cli_addr){
     printf("Client : %s\n", buffer);
     char *hello = "Message bien reçu, Boris est un fdp";
     sendto(sock, (const char *)hello, strlen(hello), 0, (const struct sockaddr *) &cli_addr, len); 
+    if (strcmp(buffer, "EOF") == 0)
+    {
+        printf("Server shutdown\n");
+        return -1;
+    }
     return 0;
 }
 
@@ -120,7 +125,12 @@ int main(int argc, char **argv) {
 
     while (1)
     {
-        receive_and_send_message(sock, cli_addr);
+        int res = receive_and_send_message(sock, cli_addr);
+        if (res == -1)
+        {
+            break;
+        }
+        
         //send_message(sock, cli_addr, len);
     }
     

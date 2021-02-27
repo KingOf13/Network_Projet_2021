@@ -111,15 +111,29 @@ int main(int argc, char **argv) {
      * **********/
 
     //if no file is given, read the stdin input and send it as message to server (receiver)
+    char line[512];
     if (filename == NULL)
     {
-        char line[512];
+        
         while(fgets(line, 512, stdin)!= NULL){
             //printf("%s\n", line);
             send_stdin_message(sock, line, peer_addr);
             receive_message(sock, peer_addr);
         }
+        
+    }else{
+        FILE* fp = fopen(filename, "r");
+        if (fp == NULL)
+        {
+            return -1;
+        }
+        printf("HEY\n");
+        while(fgets(line, 512, fp) != NULL){
+            send_stdin_message(sock, line, peer_addr);
+            receive_message(sock, peer_addr);
+        }
     }
+    send_stdin_message(sock, "EOF", peer_addr);
     
 
     /*************
