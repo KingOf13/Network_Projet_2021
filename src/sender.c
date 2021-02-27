@@ -14,34 +14,47 @@ int print_usage(char *prog_name) {
     return EXIT_FAILURE;
 }
 
-int connect_server(char* receiver_ip, uint16_t receiver_port){
-    char *hello = "Hello from client"; 
+//creation of server adress
+struct sockaddr_in6 create_address(char* receiver_ip, uint16_t receiver_port){
     struct sockaddr_in6 peer_addr;             
     memset(&peer_addr, 0, sizeof(peer_addr));        
     peer_addr.sin6_family = AF_INET6;                
     peer_addr.sin6_port = htons(receiver_port);                 
-    inet_pton(AF_INET6, receiver_ip, &peer_addr.sin6_addr);   
+    inet_pton(AF_INET6, receiver_ip, &peer_addr.sin6_addr); 
+    return peer_addr;
+}
 
+//send message from stdin input "./sender ::1 12345 < file.txt"
+int send_stdin_message(int sock, char* buffer, struct sockaddr_in6 peer_addr){
+    sendto(sock, (const char*)buffer, strlen(buffer), 0, (const struct sockaddr *) &peer_addr, sizeof(peer_addr));
+    
+}
+
+//receive message back from server
+int receive_message(int sock, struct sockaddr_in6  peer_addr){
+    char buf[512];
+    socklen_t len_peer = sizeof(struct sockaddr_in6);
+    int n = recvfrom(sock, (char *)buf, 512, 0, (struct sockaddr *) &peer_addr, &len_peer); 
+    buf[n] = '\0'; 
+    printf("Server : %s\n", buf);
+    return 0;
+}
+
+//create socket
+int create_socket(){
     int sock = socket(AF_INET6, SOCK_DGRAM, 0); 
     if (sock == -1) {
         return -1;
     }
-
-    sendto(sock, (const char*)hello, strlen(hello), 0, (const struct sockaddr *) &peer_addr, sizeof(peer_addr));
-    printf("Hello message sent.\n");
-    char buffer[1024];
-    int len_peer;
-    int n = recvfrom(sock, (char *)buffer, 1024,  
-                0, (struct sockaddr *) &peer_addr, 
-                &len_peer); 
-    buffer[n] = '\0'; 
-    printf("Server : %s\n", buffer);
-    close(sock);
-    return 0;
+    return sock;
 }
 
 
 int main(int argc, char **argv) {
+    /*************
+     * given argument handling part
+     * **********/
+
     int opt;
 
     char *filename = NULL;
@@ -77,7 +90,48 @@ int main(int argc, char **argv) {
         return print_usage(argv[0]);
     }
 
-    connect_server(receiver_ip, receiver_port);
+    /*************
+     * end given argument handling part
+     * **********/
+    
+
+    /*************
+     * socket creation 
+     * **********/
+
+    struct sockaddr_in6 peer_addr = create_address(receiver_ip, receiver_port);
+    int sock = create_socket();
+
+    /*************
+     * end socket creation 
+     * **********/
+
+    /*************
+     * file handling
+     * **********/
+    
+    //if no file is given, read the stdin input and send it as message to server (receiver)
+    if (filename == NULL)
+    {
+        char line[512];
+        while(fgets(line, 512, stdin)!= NULL){
+            //printf("%s\n", line);
+            send_stdin_message(sock, line, peer_addr);
+            receive_message(sock, peer_addr);
+        }
+    }
+    
+
+    /*************
+     * end file handling
+     * **********/
+
+
+    close(sock);
+
+    /*************
+     * given test + debug part
+     * **********/
 
     ASSERT(1 == 1); // Try to change it to see what happens when it fails
     DEBUG_DUMP("Some bytes", 11); // You can use it with any pointer type
@@ -90,5 +144,8 @@ int main(int argc, char **argv) {
     ERROR("This is not an error, %s", "now let's code!");
 
     // Now let's code!
+    /*************
+     * end given test + debug part
+     * **********/
     return EXIT_SUCCESS;
 }
