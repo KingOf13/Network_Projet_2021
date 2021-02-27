@@ -27,7 +27,7 @@ struct sockaddr_in6 create_address(char* receiver_ip, uint16_t receiver_port){
 //send message from stdin input "./sender ::1 12345 < file.txt"
 int send_stdin_message(int sock, char* buffer, struct sockaddr_in6 peer_addr){
     sendto(sock, (const char*)buffer, strlen(buffer), 0, (const struct sockaddr *) &peer_addr, sizeof(peer_addr));
-    
+    return 0;
 }
 
 //receive message back from server
@@ -109,7 +109,7 @@ int main(int argc, char **argv) {
     /*************
      * file handling
      * **********/
-    
+
     //if no file is given, read the stdin input and send it as message to server (receiver)
     if (filename == NULL)
     {
