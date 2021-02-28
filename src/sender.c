@@ -40,6 +40,11 @@ int receive_message(int sock, struct sockaddr_in6  peer_addr){
     return 0;
 }
 
+//client (sender) connection to 
+int connect_to_server(int sock, struct sockaddr_in6 peer_addr){
+    return connect(sock, (struct sockaddr *) &peer_addr, sizeof(peer_addr));
+}
+
 //create socket
 int create_socket(){
     int sock = socket(AF_INET6, SOCK_DGRAM, 0); 
@@ -96,11 +101,16 @@ int main(int argc, char **argv) {
     
 
     /*************
-     * socket creation 
+     * socket creation and connection
      * **********/
 
     struct sockaddr_in6 peer_addr = create_address(receiver_ip, receiver_port);
     int sock = create_socket();
+    if(sock == -1){return -1;}
+
+    //connect not necessary in UDP (normally)
+    /*int connect = connect_to_server(sock, peer_addr);
+    if(connect == -1){return -1;}*/
 
     /*************
      * end socket creation 
@@ -127,11 +137,11 @@ int main(int argc, char **argv) {
         {
             return -1;
         }
-        printf("HEY\n");
         while(fgets(line, 512, fp) != NULL){
             send_stdin_message(sock, line, peer_addr);
             receive_message(sock, peer_addr);
         }
+        fclose(fp);
     }
     send_stdin_message(sock, "EOF", peer_addr);
     
@@ -142,6 +152,20 @@ int main(int argc, char **argv) {
 
 
     close(sock);
+
+    /*************
+     * stats file handling
+     * **********/
+
+    if (stats_filename != NULL)
+    {
+        
+    }
+    
+
+    /*************
+     * end stats file handling
+     * **********/
 
     /*************
      * given test + debug part
