@@ -73,24 +73,29 @@ int main(int argc, char **argv) {
      * file handling
      * **********/
 
-
-    /*struct timeval tv;
+    //timeout to prevent recvfrom to block code
+    struct timeval tv;
     tv.tv_sec = 2;
     tv.tv_usec = 0;
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);*/
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
 
     //if no file is given, read the stdin input and send it as message to server (receiver)
+    char line[512];
     if (filename == NULL){
-            char line[512];
-            
             while(fgets(line, 512, stdin) != NULL){
                 send_stdin_message(sock, line, peer_addr);
                 //printf("%s\n", line);
                 receive_message(sock, peer_addr);
             }
-            send_stdin_message(sock, "EOF", peer_addr);
+            
     }else{
-
+        FILE* fp = fopen(filename, "r");
+        if (fp == NULL){return -1;}
+        while(fgets(line, 512, fp) != NULL){
+                send_stdin_message(sock, line, peer_addr);
+                //printf("%s\n", line);
+                receive_message(sock, peer_addr);
+        }
     }
     
     
@@ -136,50 +141,3 @@ int main(int argc, char **argv) {
      * **********/
     return EXIT_SUCCESS;
 }
-
-/*    fd_set inputs;
-    FD_ZERO(&inputs);
-    FD_SET(fileno(stdin), &inputs);
-    FD_SET(sfd, &inputs);
-    while (1)
-    {
-        retval = select(sfd+1, &inputs, NULL, NULL, NULL);
-        if (retval == -1){
-            perror("select()");
-        }
-            
-        else if (retval){
-            if(FD_ISSET(fileno(stdin),&inputs)){
-                char* t = fgets(buf,512,stdin);
-                if(t == NULL){
-                    return;
-                }
-                packet_t pack;
-                pack.type = PTYPE_DATA;
-                pack.window = 1;
-                pack.length = strlen(buf);
-                pack.seqnum = 12;
-                pack.timestamp = 1;
-                pack.trunc = 0;
-                pack.payload = (u_int8_t*) buf;
-                int ret;
-                int len;
-                char* packbuf = encode(&pack,&ret,&len);
-                printf("Byte-size of packet is %i\n",len);
-                send(sfd,packbuf,len,0);
-            }
-            if(FD_ISSET(sfd,&inputs)){
-                int a = recv(sfd,buf,1024,0);
-                *(buf + a) = '\0';
-                int b = fwrite(buf,1,strlen(buf),stdout);
-                if(b==-1){
-                    return;
-                }
-            }
-            FD_ZERO(&inputs);
-            FD_SET(fileno(stdin), &inputs);
-            FD_SET(sfd, &inputs);
-            // fread(buf, sizeof(char),1, stdin);    
-        }     
-    }
-   */

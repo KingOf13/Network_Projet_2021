@@ -54,6 +54,10 @@ int main(int argc, char **argv) {
     int sock = create_socket();
     struct sockaddr_in6 peer_addr = create_address(listen_ip, listen_port);
     struct sockaddr_in6 cli_addr = create_client_address();
+    struct timeval tv;
+    tv.tv_sec = 10;
+    tv.tv_usec = 0;
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
     bind_server(sock, peer_addr);
 
     /*************
@@ -63,6 +67,8 @@ int main(int argc, char **argv) {
     /*************
      * message handling
      * **********/
+    //timeout to prevent recvfrom to block code
+    
 
     while (1)
     {
