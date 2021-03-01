@@ -2,7 +2,11 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdint.h>
-
+#include <string.h>
+#include <sys/types.h>       
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include "log.h"
 
 int print_usage(char *prog_name) {
@@ -10,8 +14,52 @@ int print_usage(char *prog_name) {
     return EXIT_FAILURE;
 }
 
+//creation of server adress
+struct sockaddr_in6 create_address(char* receiver_ip, uint16_t receiver_port){
+    struct sockaddr_in6 peer_addr;             
+    memset(&peer_addr, 0, sizeof(peer_addr));        
+    peer_addr.sin6_family = AF_INET6;                
+    peer_addr.sin6_port = htons(receiver_port);                 
+    inet_pton(AF_INET6, receiver_ip, &peer_addr.sin6_addr); 
+    return peer_addr;
+}
+
+//send message from stdin input "./sender ::1 12345 < file.txt"
+int send_stdin_message(int sock, char* buffer, struct sockaddr_in6 peer_addr){
+    sendto(sock, (const char*)buffer, strlen(buffer), 0, (const struct sockaddr *) &peer_addr, sizeof(peer_addr));
+    return 0;
+}
+
+//receive message back from server
+int receive_message(int sock, struct sockaddr_in6  peer_addr){
+    char buf[512];
+    socklen_t len_peer = sizeof(struct sockaddr_in6);
+    int n = recvfrom(sock, (char *)buf, 512, 0, (struct sockaddr *) &peer_addr, &len_peer); 
+    buf[n] = '\0'; 
+    printf("Server : %s\n", buf);
+    return 0;
+}
+
+//client (sender) connection to 
+int connect_to_server(int sock, struct sockaddr_in6 peer_addr){
+    return connect(sock, (struct sockaddr *) &peer_addr, sizeof(peer_addr));
+}
+
+//create socket
+int create_socket(){
+    int sock = socket(AF_INET6, SOCK_DGRAM, 0); 
+    if (sock == -1) {
+        return -1;
+    }
+    return sock;
+}
+
 
 int main(int argc, char **argv) {
+    /*************
+     * given argument handling part
+     * **********/
+
     int opt;
 
     char *filename = NULL;
@@ -47,6 +95,82 @@ int main(int argc, char **argv) {
         return print_usage(argv[0]);
     }
 
+    /*************
+     * end given argument handling part
+     * **********/
+    
+
+    /*************
+     * socket creation and connection
+     * **********/
+
+    struct sockaddr_in6 peer_addr = create_address(receiver_ip, receiver_port);
+    int sock = create_socket();
+    if(sock == -1){return -1;}
+
+    //connect not necessary in UDP (normally)
+    /*int connect = connect_to_server(sock, peer_addr);
+    if(connect == -1){return -1;}*/
+
+    /*************
+     * end socket creation 
+     * **********/
+
+    /*************
+     * file handling
+     * **********/
+
+    //if no file is given, read the stdin input and send it as message to server (receiver)
+    char line[512];
+    if (filename == NULL)
+    {
+        
+        while(fgets(line, 512, stdin)!= NULL){
+            //printf("%s\n", line);
+            send_stdin_message(sock, line, peer_addr);
+            receive_message(sock, peer_addr);
+        }
+        
+    }else{
+        FILE* fp = fopen(filename, "r");
+        if (fp == NULL)
+        {
+            return -1;
+        }
+        while(fgets(line, 512, fp) != NULL){
+            send_stdin_message(sock, line, peer_addr);
+            receive_message(sock, peer_addr);
+        }
+        fclose(fp);
+    }
+    send_stdin_message(sock, "EOF", peer_addr);
+    
+
+    /*************
+     * end file handling
+     * **********/
+
+
+    close(sock);
+
+    /*************
+     * stats file handling
+     * **********/
+
+    if (stats_filename != NULL)
+    {
+        
+    }
+    
+
+    /*************
+     * end stats file handling
+     * **********/
+
+    /*************
+     * given test + debug part
+     * **********/
+
     ASSERT(1 == 1); // Try to change it to see what happens when it fails
     DEBUG_DUMP("Some bytes", 11); // You can use it with any pointer type
 
@@ -58,5 +182,8 @@ int main(int argc, char **argv) {
     ERROR("This is not an error, %s", "now let's code!");
 
     // Now let's code!
+    /*************
+     * end given test + debug part
+     * **********/
     return EXIT_SUCCESS;
 }
