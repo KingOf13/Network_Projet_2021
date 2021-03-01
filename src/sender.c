@@ -126,7 +126,6 @@ int main(int argc, char **argv) {
     {
         
         while(fgets(line, 512, stdin)!= NULL){
-            //printf("%s\n", line);
             send_stdin_message(sock, line, peer_addr);
             receive_message(sock, peer_addr);
         }

@@ -8,7 +8,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <signal.h>
-#include <poll.h>
 #include "log.h"
 
 int print_usage(char *prog_name) {
@@ -112,19 +111,11 @@ int main(int argc, char **argv) {
     /*************
      * socket address and bind creation
      * **********/
-
-    struct pollfd pollfd[2];
     int sock = create_socket();
     struct sockaddr_in6 peer_addr = create_address(listen_ip, listen_port);
     struct sockaddr_in6 cli_addr = create_client_address();
     bind_server(sock, peer_addr);
-    
-    pollfd[0].fd = sock;
-    pollfd[0].events = POLLIN;
-    pollfd[0].revents = 0;
-    pollfd[1].fd = sock;
-    pollfd[1].events = POLLOUT;
-    pollfd[1].revents = 0;
+
 
     /*************
      * end socket address and bind creation
@@ -136,22 +127,10 @@ int main(int argc, char **argv) {
 
     while (1)
     {
-        int ret = poll(pollfd, 1, 1000);
-        if (ret == -1)
-        {
-            printf("Error with poll");
-            break;
-        }
-        if(pollfd[0].revents & POLLIN){
-            if(pollfd[0].fd == sock){
-                int res = receive_and_send_message(pollfd[0].fd, cli_addr);
-                if (res == -1){break;}
+    
+        int res = receive_and_send_message(sock, cli_addr);
+        if (res == -1){break;}
 
-                pollfd[1].fd = sock;
-                pollfd[1].fd = POLLIN;
-            }
-            
-        }
             
         
         
