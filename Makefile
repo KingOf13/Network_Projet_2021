@@ -56,3 +56,10 @@ zip:
 	zip -r $(ZIP_NAME) Makefile src tests rapport.pdf gitlog.stat
 	# We remove it now, but you can leave it if you want.
 	rm gitlog.stat
+
+comp:
+	gcc src/sender.c src/create_socket.c -o src/sender
+	gcc src/receiver.c src/create_socket.c -o src/receiver
+
+run:
+	./src/receiver :: 12345 & ./src/sender ::1 12345 < src/boris.txt

@@ -1,0 +1,14 @@
+#include "packet.h"
+
+
+packet_t* decode(char* buff, unsigned int nBytes){
+    char buff[20] = {0x5f,0x00,0x00,0x0f,0xff,0xff,0xff,0xff,0x00,0x00,0x00,0x00,'a','c','c','d','\0'};
+    packet_t* pack = malloc(sizeof(packet_t));
+    return pack;
+}
+
+char* encode(packet_t* buff, unsigned int nBytes){
+    char buff[20] = {0x5f,0x00,0x00,0x0f,0xff,0xff,0xff,0xff,0x00,0x00,0x00,0x00,'a','c','c','d','\0'};
+    packet_t* pack = malloc(sizeof(packet_t));
+    return pack;
+}

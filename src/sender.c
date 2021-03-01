@@ -1,57 +1,10 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <stdint.h>
-#include <string.h>
-#include <sys/types.h>       
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #include "log.h"
+#include "packet.h"
+#include "create_socket.h"
 
 int print_usage(char *prog_name) {
     ERROR("Usage:\n\t%s [-f filename] [-s stats_filename] receiver_ip receiver_port", prog_name);
     return EXIT_FAILURE;
-}
-
-//creation of server adress
-struct sockaddr_in6 create_address(char* receiver_ip, uint16_t receiver_port){
-    struct sockaddr_in6 peer_addr;             
-    memset(&peer_addr, 0, sizeof(peer_addr));        
-    peer_addr.sin6_family = AF_INET6;                
-    peer_addr.sin6_port = htons(receiver_port);                 
-    inet_pton(AF_INET6, receiver_ip, &peer_addr.sin6_addr); 
-    return peer_addr;
-}
-
-//send message from stdin input "./sender ::1 12345 < file.txt"
-int send_stdin_message(int sock, char* buffer, struct sockaddr_in6 peer_addr){
-    sendto(sock, (const char*)buffer, strlen(buffer), 0, (const struct sockaddr *) &peer_addr, sizeof(peer_addr));
-    return 0;
-}
-
-//receive message back from server
-int receive_message(int sock, struct sockaddr_in6  peer_addr){
-    char buf[512];
-    socklen_t len_peer = sizeof(struct sockaddr_in6);
-    int n = recvfrom(sock, (char *)buf, 512, 0, (struct sockaddr *) &peer_addr, &len_peer); 
-    buf[n] = '\0'; 
-    printf("Server : %s\n", buf);
-    return 0;
-}
-
-//client (sender) connection to 
-int connect_to_server(int sock, struct sockaddr_in6 peer_addr){
-    return connect(sock, (struct sockaddr *) &peer_addr, sizeof(peer_addr));
-}
-
-//create socket
-int create_socket(){
-    int sock = socket(AF_INET6, SOCK_DGRAM, 0); 
-    if (sock == -1) {
-        return -1;
-    }
-    return sock;
 }
 
 
@@ -120,30 +73,26 @@ int main(int argc, char **argv) {
      * file handling
      * **********/
 
+
+    /*struct timeval tv;
+    tv.tv_sec = 2;
+    tv.tv_usec = 0;
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);*/
+
     //if no file is given, read the stdin input and send it as message to server (receiver)
-    char line[512];
-    if (filename == NULL)
-    {
-        
-        while(fgets(line, 512, stdin)!= NULL){
-            //printf("%s\n", line);
-            send_stdin_message(sock, line, peer_addr);
-            receive_message(sock, peer_addr);
-        }
-        
+    if (filename == NULL){
+            char line[512];
+            
+            while(fgets(line, 512, stdin) != NULL){
+                send_stdin_message(sock, line, peer_addr);
+                //printf("%s\n", line);
+                receive_message(sock, peer_addr);
+            }
+            send_stdin_message(sock, "EOF", peer_addr);
     }else{
-        FILE* fp = fopen(filename, "r");
-        if (fp == NULL)
-        {
-            return -1;
-        }
-        while(fgets(line, 512, fp) != NULL){
-            send_stdin_message(sock, line, peer_addr);
-            receive_message(sock, peer_addr);
-        }
-        fclose(fp);
+
     }
-    send_stdin_message(sock, "EOF", peer_addr);
+    
     
 
     /*************
@@ -187,3 +136,50 @@ int main(int argc, char **argv) {
      * **********/
     return EXIT_SUCCESS;
 }
+
+/*    fd_set inputs;
+    FD_ZERO(&inputs);
+    FD_SET(fileno(stdin), &inputs);
+    FD_SET(sfd, &inputs);
+    while (1)
+    {
+        retval = select(sfd+1, &inputs, NULL, NULL, NULL);
+        if (retval == -1){
+            perror("select()");
+        }
+            
+        else if (retval){
+            if(FD_ISSET(fileno(stdin),&inputs)){
+                char* t = fgets(buf,512,stdin);
+                if(t == NULL){
+                    return;
+                }
+                packet_t pack;
+                pack.type = PTYPE_DATA;
+                pack.window = 1;
+                pack.length = strlen(buf);
+                pack.seqnum = 12;
+                pack.timestamp = 1;
+                pack.trunc = 0;
+                pack.payload = (u_int8_t*) buf;
+                int ret;
+                int len;
+                char* packbuf = encode(&pack,&ret,&len);
+                printf("Byte-size of packet is %i\n",len);
+                send(sfd,packbuf,len,0);
+            }
+            if(FD_ISSET(sfd,&inputs)){
+                int a = recv(sfd,buf,1024,0);
+                *(buf + a) = '\0';
+                int b = fwrite(buf,1,strlen(buf),stdout);
+                if(b==-1){
+                    return;
+                }
+            }
+            FD_ZERO(&inputs);
+            FD_SET(fileno(stdin), &inputs);
+            FD_SET(sfd, &inputs);
+            // fread(buf, sizeof(char),1, stdin);    
+        }     
+    }
+   */
