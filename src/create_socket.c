@@ -22,6 +22,7 @@ int receive_message(int sock, struct sockaddr_in6  peer_addr){
     char buf[512];
     socklen_t len_peer = sizeof(struct sockaddr_in6);
     int n = recvfrom(sock, (char *)buf, 512, 0, (struct sockaddr *) &peer_addr, &len_peer); 
+    if(n == -1){return -1;}
     buf[n] = '\0'; 
     printf("Server : %s\n", buf);
     return 0;

@@ -1,5 +1,4 @@
 #include "log.h"
-#include "packet.h"
 #include "create_socket.h"
 
 int print_usage(char *prog_name) {
@@ -85,7 +84,11 @@ int main(int argc, char **argv) {
             while(fgets(line, 512, stdin) != NULL){
                 send_stdin_message(sock, line, peer_addr);
                 //printf("%s\n", line);
-                receive_message(sock, peer_addr);
+                int n = receive_message(sock, peer_addr);
+                if(n == -1){
+                    printf("No anwser from server\n");
+                    continue;
+                }
             }
             
     }else{

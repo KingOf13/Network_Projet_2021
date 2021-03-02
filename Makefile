@@ -62,4 +62,4 @@ comp:
 	gcc src/receiver.c src/create_socket.c -o src/receiver
 
 run:
-	./src/receiver :: 12345 & ./src/sender ::1 12345 < src/boris.txt
+	./src/receiver :: 12345 | ./src/sender ::1 12345 < src/boris.txt

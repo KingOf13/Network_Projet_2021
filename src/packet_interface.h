@@ -4,20 +4,24 @@
 #include <stddef.h> /* size_t */
 #include <stdint.h> /* uintx_t */
 #include <stdio.h>  /* ssize_t */
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/types.h>   
 
 /* Raccourci pour struct pkt */
-struct __attribute__((__packed__)) pkt {
+typedef struct __attribute__((__packed__)) pkt {
         uint8_t window : 5;
         uint8_t tr : 1;
         ptypes_t type : 2;
-        uint8_t L : 1;
+        //uint8_t L : 1;
         uint16_t length : 15;
         uint8_t seqnum;
         uint32_t timestamp;
         uint32_t crc1;
         char* payload;
         uint32_t crc2;
-};
+}pkt_t;
 
 /* Types de paquets */
 typedef enum {
