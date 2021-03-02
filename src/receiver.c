@@ -50,7 +50,6 @@ int main(int argc, char **argv) {
     /*************
      * socket address and bind creation
      * **********/
-
     int sock = create_socket();
     struct sockaddr_in6 peer_addr = create_address(listen_ip, listen_port);
     struct sockaddr_in6 cli_addr = create_client_address();
