@@ -19,9 +19,9 @@ struct sockaddr_in6 create_address(char* ip, uint16_t port){
 
 //receive message back from server
 int receive_message(int sock, struct sockaddr_in6  peer_addr){
-    char buf[512];
+    char buf[512*8];
     socklen_t len_peer = sizeof(struct sockaddr_in6);
-    int n = recvfrom(sock, (char *)buf, 512, 0, (struct sockaddr *) &peer_addr, &len_peer); 
+    int n = recvfrom(sock, (char *)buf, 512*8, 0, (struct sockaddr *) &peer_addr, &len_peer); 
     if(n == -1){return -1;}
     buf[n] = '\0'; 
     printf("Server : %s\n", buf);
@@ -30,9 +30,9 @@ int receive_message(int sock, struct sockaddr_in6  peer_addr){
 
 //receive message from sender (client) and send message back (-> still don't know how to separe them)
 int receive_and_send_message(int sock, struct sockaddr_in6 cli_addr){
-    char buffer[512]; 
+    char buffer[512*8]; 
     socklen_t len = sizeof(cli_addr);
-    int n = recvfrom(sock, (char *)buffer, 512, 0, ( struct sockaddr *) &cli_addr, &len);
+    int n = recvfrom(sock, (char *)buffer, 512*8, 0, ( struct sockaddr *) &cli_addr, &len);
     if(n == -1){
         printf("server shutdown\n");
         return -1;
@@ -40,7 +40,7 @@ int receive_and_send_message(int sock, struct sockaddr_in6 cli_addr){
     buffer[n] = '\0'; 
     printf("Client : %s\n", buffer);
     char hello[1024]; 
-    sprintf(hello, "Server anwser: %s", buffer);
+    sprintf(hello, "Server anwser: yes");
     sendto(sock, (const char *)hello, strlen(hello), 0, (const struct sockaddr *) &cli_addr, len); 
     return 0;
 }

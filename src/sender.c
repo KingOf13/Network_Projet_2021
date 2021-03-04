@@ -79,25 +79,29 @@ int main(int argc, char **argv) {
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
 
     //if no file is given, read the stdin input and send it as message to server (receiver)
-    char line[512];
+    char line[512*8];
+
     if (filename == NULL){
-            while(fgets(line, 512, stdin) != NULL){
+            while(1){
+                int res = fread(line, 512*8, 1, stdin);
+                printf("%s\n", line);
                 send_stdin_message(sock, line, peer_addr);
-                //printf("%s\n", line);
                 int n = receive_message(sock, peer_addr);
                 if(n == -1){
                     printf("No anwser from server\n");
-                    continue;
                 }
+                if(res != 1){break;}
             }
             
     }else{
         FILE* fp = fopen(filename, "r");
         if (fp == NULL){return -1;}
-        while(fgets(line, 512, fp) != NULL){
-                send_stdin_message(sock, line, peer_addr);
-                //printf("%s\n", line);
-                receive_message(sock, peer_addr);
+        while(1){
+            int res = fread(line, 512*8, 1, fp);
+            send_stdin_message(sock, line, peer_addr);
+            //printf("%s\n", line);
+            receive_message(sock, peer_addr);
+            if(res != 1){break;}
         }
     }
     
