@@ -6,6 +6,7 @@
 /* Extra code */
 /* Your code will be inserted here */
 
+
 pkt_t* pkt_new()
 {
     pkt_t *new = (pkt_t *) malloc(sizeof(pkt_t));
@@ -14,7 +15,6 @@ pkt_t* pkt_new()
     new->type = 0;
     new->tr = 0;
     new->window = 0;
-    //new->L = 0;
     new->length = 0;
     new->seqnum = 0;
     new->timestamp = 0;
@@ -64,83 +64,67 @@ pkt_status_code pkt_decode(const char *data, const size_t len, pkt_t *pkt)
   /* TR */
   uint8_t TR = firstByte&0b00100000;
   TR = TR>>5;
-  pkt_status_code statustr = pkt_set_tr(pkt,TR);
-  if(statustr!=PKT_OK) {
-      return statustr;
+  pkt_status_code tr_s = pkt_set_tr(pkt,TR);
+  if(tr_s!=PKT_OK) {
+      return tr_s;
   }
-
   /* WINDOW */
-  uint8_t WINDOW = b1&0b00011111;
-  pkt_status_code statuswindow = pkt_set_window(pkt,WINDOW);
-  if(statuswindow!=PKT_OK) {
-      return statuswindow;
+
+  uint8_t WINDOW = firstByte&0b00011111;
+  pkt_status_code window_s = pkt_set_window(pkt,WINDOW);
+  if(window_s!=PKT_OK) {
+      return window_s;
   }
 
+  int offset = 0;
 
-  /**** BYTE LENGTH ****/
-  uint8_t secondByte;
-  memcpy(&secondByte,&data[1],1);
-  int L = secondByte>>7;
-  L = 0b00000001&L;
-
-  if(L==0) {
-      uint16_t here = secondByte&0b01111111;
-      pkt_status_code statuslength = pkt_set_length(pkt,here);
-      if(statuslength!=PKT_OK) {
-          return statuslength;
-      }
+  if (TYPE == PTYPE_ACK) {
+    offset = 2;
+    /**** LENGTH ****/
+    uint16_t length;
+    memcpy(&length, &data[1], 2);
+    length = ntohs(length);
+    pkt_status_code length_s = pkt_set_length(pkt,length);
+    if(length_s !=PKT_OK) {
+        return length_s;
+    }
   }
-
-  else if(L==1){
-      uint16_t here;
-      memcpy(&here, &data[1], 2);
-      here = ntohs(here);
-      here = here&0b0111111111111111;
-      pkt_status_code statuslength = pkt_set_length(pkt,here);
-      if(statuslength !=PKT_OK) {
-          return statuslength;
-      }
-  }
-
-
-  /**** BYTE SEQNUM ****/
-  uint8_t fourthByte;
-  memcpy(&fourthByte, &data[2+L], 1);
-  pkt_status_code seqnum_s = pkt_set_seqnum(pkt,fourthByte);
+  /*** SEQNUM ***/
+  uint8_t seqnum;
+  memcpy(&seqnum, &data[1+offset], 1);
+  pkt_status_code seqnum_s = pkt_set_seqnum(pkt,seqnum);
   if(seqnum_s!=PKT_OK) {
     return seqnum_s;
   }
-
-
-  /**** BYTE TIMESTAMP ****/
-  uint32_t fifthByte;
-  memcpy(&fifthByte, &data[3+L], 4);
-  pkt_status_code timestamp_s = pkt_set_timestamp(pkt,fifthByte);
+  /**** TIMESTAMP ****/
+  uint32_t timestamp;
+  memcpy(&timestamp, &data[2+offset], 4);
+  pkt_status_code timestamp_s = pkt_set_timestamp(pkt,timestamp);
   if(timestamp_s!=PKT_OK) {
       return timestamp_s;
   }
 
 
   /**** BYTE CRC1 ****/
-  uint32_t sixthByte;
-  memcpy(&sixthByte,&data[7+L],4);
-  sixthByte = ntohl(sixthByte);
+  uint32_t CRC1;
+  memcpy(&CRC1,&data[6+offset],4);
+  CRC1 = ntohl(CRC1);
 
 
   /**** CRC32 HEADER VERIFICATION ****/
   uint32_t crc1 = crc32(0L, Z_NULL, 0);
   if(TR==0) {
-      crc1 = crc32(crc1,(const Bytef*) &data[0], 7+L);
-      if(sixthByte!=crc1) {
+      crc1 = crc32(crc1,(const Bytef*) &data[0], 6+offset);
+      if(CRC1!=crc1) {
           return E_CRC;
       }
   }
   else {
-      char *header = (char *)malloc(sizeof(char)*(7+L));
-      memcpy(header,&data[0],7+L);
+      char *header = (char *)malloc(sizeof(char)*(6+offset));
+      memcpy(header,&data[0],6+offset);
       header[0] = header[0]&0b11011111;
-      crc1 = crc32(crc1,(const Bytef*) header, 7+L);
-      if(sixthByte!=crc1) {
+      crc1 = crc32(crc1,(const Bytef*) header, 6+offset);
+      if(CRC1!=crc1) {
           return E_CRC;
       }
       free(header);
@@ -154,7 +138,7 @@ pkt_status_code pkt_decode(const char *data, const size_t len, pkt_t *pkt)
   /**** BYTES PAYLOAD ****/
   int payloadLength = pkt->length;
   char *payload = (char *) malloc(sizeof(char)*payloadLength);
-  memcpy(payload,&data[11+L],payloadLength);
+  memcpy(payload,&data[10+offset],payloadLength);
   pkt_status_code payload_s = pkt_set_payload(pkt,payload,payloadLength);
   free(payload);
   if(payload_s!=PKT_OK) {
@@ -163,29 +147,87 @@ pkt_status_code pkt_decode(const char *data, const size_t len, pkt_t *pkt)
 
 
   /**** CRC32 PAYLOAD VERIFICATION ****/
-  uint32_t seventhByte;
-  memcpy(&seventhByte,&data[11 + L + pkt->length],4);
-  seventhByte = ntohl(seventhByte);
+  uint32_t CRC2;
+  memcpy(&CRC2,&data[10 + offset + pkt->length],4);
+  CRC2 = ntohl(CRC2);
 
   if(pkt->payload!=NULL && pkt->tr==0) {
       uint32_t crc2 = crc32(0L, Z_NULL, 0);
-      crc2 = crc32(crc2,(const Bytef*) &data[11+L], pkt->length);
-      if(seventhByte!=crc2) {
+      crc2 = crc32(crc2,(const Bytef*) &data[10+offset], pkt->length);
+      if(CRC2!=crc2) {
           return E_CRC;
       }
-      pkt_status_code statuscrc2 = pkt_set_crc2(pkt,crc2);
-      if(statuscrc2!=PKT_OK) {
-          return statuscrc2;
+      pkt_status_code CRC2_s = pkt_set_crc2(pkt,crc2);
+      if(CRC2_s!=PKT_OK) {
+          return CRC2_s;
       }
   }
 
   return PKT_OK;
 }
 
+
+
 pkt_status_code pkt_encode(const pkt_t* pkt, char *buf, size_t *len)
 {
-    /* Your code will be inserted here */
+
+  int header_length = (int) predict_header_length(pkt);
+  uint16_t payload_length = pkt_get_length(pkt);
+  int total_length = header_length+payload_length+4;
+
+
+  if(pkt->payload!=NULL && pkt->tr==0) {
+      total_length += 4;
+  }
+
+  if(total_length > (int) len[0]) {
+      return E_NOMEM;
+  }
+
+  int place = 0;
+  uint8_t type = (uint8_t) pkt_get_type(pkt) << 6;
+  uint8_t TR = pkt_get_tr(pkt) << 5;
+  uint8_t window = pkt_get_window(pkt);
+  buf[place] = type + TR + window;
+
+  place ++;
+
+  if (pkt_get_type(pkt) == PTYPE_ACK) {
+    uint16_t length = htonl(payload_length);
+    memcpy(&buf[place], &length, 2);
+    place += 2;
+  }
+
+  buf[place] = (char) pkt_get_seqnum(pkt);
+  place ++;
+
+  uint32_t tmstamp = pkt_get_timestamp(pkt);
+  memcpy(&buf[place], &tmstamp, 4);
+  place += 4;
+
+  uLong CRC;
+  char *header = malloc(predict_header_length(pkt)*sizeof(char));
+  if (header == NULL) return E_CRC;
+
+  memcpy(&header, &buf, predict_header_length(pkt));
+  CRC = htonl(crc32(crc32(0L, Z_NULL, 0), (const unsigned char *) header, predict_header_length(pkt)));
+  memcpy(&buf[place], &CRC, 4);
+  place += 4;
+
+  if (pkt_get_type(pkt) == PTYPE_DATA) {
+    memcpy(&buf[place], pkt_get_payload(pkt), payload_length);
+    place += payload_length;
+    uLong CRC2 = htonl(crc32(crc32(0L, Z_NULL, 0), (const unsigned char *) pkt_get_payload(pkt), payload_length));
+    memcpy(&buf[place], &CRC2, 4);
+    place +=4;
+  }
+
+  *len = place;
+
+  return PKT_OK;
 }
+
+
 
 ptypes_t pkt_get_type  (const pkt_t* pkt)
 {
@@ -209,7 +251,7 @@ uint8_t  pkt_get_seqnum(const pkt_t* pkt)
 
 uint16_t pkt_get_length(const pkt_t* pkt)
 {
-    pkt->length;
+   return pkt->length;
 }
 
 uint32_t pkt_get_timestamp   (const pkt_t* pkt)
@@ -290,10 +332,37 @@ pkt_status_code pkt_set_payload(pkt_t *pkt,
                                 const char *data,
                                 const uint16_t length)
 {
-    /* Your code will be inserted here */
+    if(pkt == NULL) {
+        return E_UNCONSISTENT;
+    }
+    if(data == NULL || length >512){
+        return E_LENGTH;
+    }
+
+    pkt_status_code statuslength = pkt_set_length(pkt, length);
+    if(statuslength!=PKT_OK) {
+        return statuslength;
+    }
+
+    pkt->payload = (char*) malloc(length);
+    if(pkt->payload==NULL) {
+        free(pkt->payload);
+        return E_NOMEM;
+    }
+	memcpy(pkt->payload, data, length);
+    return PKT_OK;
 }
 
 ssize_t predict_header_length(const pkt_t *pkt)
 {
-    /* Your code will be inserted here */
+    int longueur = pkt_get_length(pkt);
+    if(longueur>=0x8000) {
+        return -1;
+    }
+    if(longueur>127) {
+        return 8;
+    }
+    else {
+        return 7;
+    }
 }
