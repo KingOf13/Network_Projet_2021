@@ -102,7 +102,6 @@ int main(int argc, char **argv) {
         while(1){
             window--;
             int res = fread(line, 512, 1, fp);
-            printf("lin: %s\n", line);
             pkt_t* pkt = pkt_new();
             pkt_set_type(pkt, PTYPE_DATA);
             pkt_set_tr(pkt, 0);
@@ -114,16 +113,16 @@ int main(int argc, char **argv) {
             //printf("ici %d\n", pkt_get_length(pkt));
             seqnum++;
             pkt_set_payload(pkt, line, 512);
-            printf("payload %s\n", pkt_get_payload(pkt));
-            char* buf = malloc(4224);
+            //printf("payload %s\n", pkt_get_payload(pkt));
+            char* buf = malloc(sizeof(char)*4224);
             size_t* len = malloc(sizeof(int));
             *len = 4224;
             pkt_encode(pkt, buf, len);
-            pkt_t* pkt2 = pkt_new();
+            /*pkt_t* pkt2 = pkt_new();
             pkt_decode(buf, 4224, pkt2);
-            //printf("%s\n", pkt_get_payload(pkt2));
-            //send_stdin_message(sock, buf, peer_addr);
-            //receive_message(sock, peer_addr);
+            printf("%s\n", pkt_get_payload(pkt2));*/
+            send_stdin_message(sock, buf, peer_addr);
+            receive_message(sock, peer_addr);
             memset(line, 0, 512);
             if(res != 1){break;}
         }

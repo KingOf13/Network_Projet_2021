@@ -51,19 +51,21 @@ pkt_status_code pkt_decode(const char *data, const size_t len, pkt_t *pkt)
   if(len<11) {
       return E_UNCONSISTENT;
   }
-
   /**** PREMIER BYTE ****/
   uint8_t firstByte;
   memcpy(&firstByte,&data[0],1);
+  
 
   /* TYPE */
   uint8_t TYPE = firstByte&0b11000000;
   TYPE = TYPE>>6;
   pkt_status_code statustype = pkt_set_type(pkt,TYPE);
   if(statustype!=PKT_OK) {
+      printf("HEY\n");
       return statustype;
   }
-
+  
+     
   /* TR */
   uint8_t TR = firstByte&0b00100000;
   TR = TR>>5;
@@ -78,6 +80,7 @@ pkt_status_code pkt_decode(const char *data, const size_t len, pkt_t *pkt)
   if(window_s!=PKT_OK) {
       return window_s;
   }
+ 
 
   int offset = 0;
   /**** LENGTH ****/
@@ -86,7 +89,6 @@ if(pkt_get_type(pkt) == PTYPE_DATA){
     uint16_t length;
     memcpy(&length, &data[1], 2);
     length = ntohs(length);
-    printf("test len %d\n", length);
     pkt_status_code length_s = pkt_set_length(pkt,length);
     if(length_s !=PKT_OK) {
         return length_s;
@@ -141,13 +143,13 @@ if(pkt_get_type(pkt) == PTYPE_DATA){
   if(CRC1_s!=PKT_OK) {
       return CRC1_s;
   }
+  
     
   /**** BYTES PAYLOAD ****/
   int payloadLength = pkt_get_length(pkt);
   //printf("size %d\n", payloadLength);
   char *payload = (char *) malloc(sizeof(char)*payloadLength);
   memcpy(payload,&data[10+offset], payloadLength);
-  //printf("%s\n", payload);
   pkt_status_code payload_s = pkt_set_payload(pkt,payload,payloadLength);
   free(payload);
   if(payload_s!=PKT_OK) {
