@@ -7,6 +7,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include "packet_interface.h"
 
 int create_socket();
 struct sockaddr_in6 create_address(char*, uint16_t);

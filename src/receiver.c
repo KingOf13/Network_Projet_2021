@@ -1,6 +1,7 @@
 #include <poll.h>
 #include "log.h"
 #include "create_socket.h"
+#include "packet_interface.h"
 
 int print_usage(char *prog_name) {
     ERROR("Usage:\n\t%s [-s stats_filename] listen_ip listen_port", prog_name);
@@ -54,7 +55,7 @@ int main(int argc, char **argv) {
     struct sockaddr_in6 peer_addr = create_address(listen_ip, listen_port);
     struct sockaddr_in6 cli_addr = create_client_address();
     struct timeval tv;
-    tv.tv_sec = 5;
+    tv.tv_sec = 100;
     tv.tv_usec = 0;
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
     bind_server(sock, peer_addr);

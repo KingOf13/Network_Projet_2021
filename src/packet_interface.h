@@ -90,7 +90,7 @@ pkt_status_code pkt_decode(const char *data, const size_t len, pkt_t *pkt);
  * @return: Un code indiquant si l'operation a reussi ou E_NOMEM si
  *         le buffer est trop petit.
  */
-pkt_status_code pkt_encode(const pkt_t*, char *buf, size_t *len);
+pkt_status_code pkt_encode(const pkt_t*, char *buf, size_t*);
 
 /* Accesseurs pour les champs toujours presents du paquet.
  * Les valeurs renvoyees sont toutes dans l'endianness native
@@ -106,7 +106,7 @@ uint32_t pkt_get_crc1     (const pkt_t*);
 /* Renvoie un pointeur vers le payload du paquet, ou NULL s'il n'y
  * en a pas.
  */
-const char* pkt_get_payload(const pkt_t*);
+char* pkt_get_payload(const pkt_t*);
 /* Renvoie le CRC2 dans l'endianness native de la machine. Si
  * ce field n'est pas present, retourne 0.
  */

@@ -1,5 +1,6 @@
 #include "create_socket.h"
 
+
 //create socket
 int create_socket(){
     int sock = socket(AF_INET6, SOCK_DGRAM, 0); 
@@ -30,24 +31,27 @@ int receive_message(int sock, struct sockaddr_in6  peer_addr){
 
 //receive message from sender (client) and send message back (-> still don't know how to separe them)
 int receive_and_send_message(int sock, struct sockaddr_in6 cli_addr){
-    char buffer[512*8]; 
+    char* buffer; 
+    pkt_t* pkt = pkt_new();
     socklen_t len = sizeof(cli_addr);
-    int n = recvfrom(sock, (char *)buffer, 512*8, 0, ( struct sockaddr *) &cli_addr, &len);
+    int n = recvfrom(sock, (char*) buffer, 4224, 0, ( struct sockaddr *) &cli_addr, &len);
+    printf("%s\n", buffer);
     if(n == -1){
         printf("server shutdown\n");
         return -1;
     }
     buffer[n] = '\0'; 
-    printf("Client : %s\n", buffer);
-    char hello[1024]; 
-    sprintf(hello, "Server anwser: yes");
+    pkt_decode(buffer, 512*8, pkt);
+    printf("Client : %s\n", pkt_get_payload(pkt));
+    char hello[512*8]; 
+    sprintf(hello, "Server anwser: %s\n", buffer);
     sendto(sock, (const char *)hello, strlen(hello), 0, (const struct sockaddr *) &cli_addr, len); 
     return 0;
 }
 
 //send message from stdin input "./sender ::1 12345 < file.txt"
-int send_stdin_message(int sock, char* buffer, struct sockaddr_in6 peer_addr){
-    sendto(sock, (const char*)buffer, strlen(buffer), 0, (const struct sockaddr *) &peer_addr, sizeof(peer_addr));
+int send_stdin_message(int sock, char* pkt, struct sockaddr_in6 peer_addr){
+    sendto(sock, (const char*)pkt, sizeof(pkt), 0, (const struct sockaddr *) &peer_addr, sizeof(peer_addr));
     return 0;
 }
 

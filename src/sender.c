@@ -1,5 +1,6 @@
 #include "log.h"
 #include "create_socket.h"
+#include "packet_interface.h"
 
 int print_usage(char *prog_name) {
     ERROR("Usage:\n\t%s [-f filename] [-s stats_filename] receiver_ip receiver_port", prog_name);
@@ -77,15 +78,17 @@ int main(int argc, char **argv) {
     tv.tv_sec = 2;
     tv.tv_usec = 0;
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+    int window = 32;
+    int seqnum = 0;
 
     //if no file is given, read the stdin input and send it as message to server (receiver)
-    char line[512*8];
+    char line[512];
 
     if (filename == NULL){
             while(1){
                 int res = fread(line, 512*8, 1, stdin);
-                printf("%s\n", line);
-                send_stdin_message(sock, line, peer_addr);
+                //printf("%s\n", line);
+                //send_stdin_message(sock, line, peer_addr);
                 int n = receive_message(sock, peer_addr);
                 if(n == -1){
                     printf("No anwser from server\n");
@@ -97,10 +100,31 @@ int main(int argc, char **argv) {
         FILE* fp = fopen(filename, "r");
         if (fp == NULL){return -1;}
         while(1){
-            int res = fread(line, 512*8, 1, fp);
-            send_stdin_message(sock, line, peer_addr);
-            //printf("%s\n", line);
-            receive_message(sock, peer_addr);
+            window--;
+            int res = fread(line, 512, 1, fp);
+            printf("lin: %s\n", line);
+            pkt_t* pkt = pkt_new();
+            pkt_set_type(pkt, PTYPE_DATA);
+            pkt_set_tr(pkt, 0);
+            pkt_set_window(pkt, window);
+            pkt_set_timestamp(pkt, 0);
+            //printf("%d\n", );
+            pkt_set_seqnum(pkt, seqnum);
+            pkt_set_length(pkt, 512);
+            //printf("ici %d\n", pkt_get_length(pkt));
+            seqnum++;
+            pkt_set_payload(pkt, line, 512);
+            printf("payload %s\n", pkt_get_payload(pkt));
+            char* buf = malloc(4224);
+            size_t* len = malloc(sizeof(int));
+            *len = 4224;
+            pkt_encode(pkt, buf, len);
+            pkt_t* pkt2 = pkt_new();
+            pkt_decode(buf, 4224, pkt2);
+            //printf("%s\n", pkt_get_payload(pkt2));
+            //send_stdin_message(sock, buf, peer_addr);
+            //receive_message(sock, peer_addr);
+            memset(line, 0, 512);
             if(res != 1){break;}
         }
     }
