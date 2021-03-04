@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
+#include <zlib.h>
+#include <arpa/inet.h>
 
 /* Raccourci pour struct pkt */
 typedef struct __attribute__((__packed__)) pkt {
