@@ -19,38 +19,48 @@ struct sockaddr_in6 create_address(char* ip, uint16_t port){
 }
 
 //receive message back from server
-int receive_message(int sock, struct sockaddr_in6  peer_addr){
-    char buf[512*8];
+pkt_t* receive_ack(int sock, struct sockaddr_in6  peer_addr){
+    char buf[528];
+    pkt_t* pkt = pkt_new();
     socklen_t len_peer = sizeof(struct sockaddr_in6);
-    int n = recvfrom(sock, (char *)buf, 512*8, 0, (struct sockaddr *) &peer_addr, &len_peer); 
-    if(n == -1){return -1;}
-    buf[n] = '\0'; 
-    printf("Server : %s\n", buf);
-    return 0;
+    int n = recvfrom(sock, (char *)buf, 528, 0, (struct sockaddr *) &peer_addr, &len_peer); 
+    if(n == -1){return NULL;}
+    pkt_decode(buf, 528, pkt);
+    printf("Server : %d\n", pkt_get_type(pkt));
+    return pkt;
 }
 
 //receive message from sender (client) and send message back (-> still don't know how to separe them)
 int receive_and_send_message(int sock, struct sockaddr_in6 cli_addr){
-    char buffer[4500];
+    char buffer[528];
     pkt_t* pkt = pkt_new();
     socklen_t len = sizeof(cli_addr);
-    
-    int n = recvfrom(sock, (char*) buffer, 4224, 0, ( struct sockaddr *) &cli_addr, &len);
+    int n = recvfrom(sock, (char*) buffer, 528, 0, ( struct sockaddr *) &cli_addr, &len);
     if(n == -1){
         printf("server shutdown\n");
         return -1;
     }
-    pkt_decode(buffer, 4224, pkt);
-    //printf("Client : %s\n", pkt_get_payload(pkt));
-    char hello[5000]; 
-    sprintf(hello, "Server anwser: %s\n", pkt_get_payload(pkt));
-    sendto(sock, (const char *)hello, strlen(hello), 0, (const struct sockaddr *) &cli_addr, len); 
-    return 0;
+    pkt_decode(buffer, 528, pkt);
+    
+    pkt_t* pkt_ack = pkt_new();
+    //printf("tr: %d\n", pkt_get_tr(pkt));
+    if(pkt_get_tr(pkt) == 0){
+        pkt_set_type(pkt_ack, PTYPE_ACK);
+    }else{
+        pkt_set_type(pkt_ack, PTYPE_NACK);
+    }
+    //printf("Client : %s\n", pkt_get_payload(pkt_ack));
+    size_t* length = malloc(sizeof(int));
+    *length = 1024;
+    char* buf_ack = malloc(sizeof(char)*528);
+    pkt_encode(pkt_ack, buf_ack, length);
+    sendto(sock, (const char *)buf_ack, *length, 0, (const struct sockaddr *) &cli_addr, len);
+    return len;
 }
 
 //send message from stdin input "./sender ::1 12345 < file.txt"
-int send_stdin_message(int sock, char* buffer, struct sockaddr_in6 peer_addr){
-    sendto(sock, (const char*) buffer, 4224, 0, (const struct sockaddr *) &peer_addr, sizeof(peer_addr));
+int send_stdin_message(int sock, char* buffer, struct sockaddr_in6 peer_addr, size_t len){
+    sendto(sock, (const char*) buffer, len, 0, (const struct sockaddr *) &peer_addr, sizeof(peer_addr));
     return 0;
 }
 

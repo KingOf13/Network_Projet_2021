@@ -9,6 +9,7 @@ int print_usage(char *prog_name) {
 }
 
 
+
 int main(int argc, char **argv) {
     /*************
      * given argument handling part
@@ -72,8 +73,10 @@ int main(int argc, char **argv) {
 
     while (1)
     {
-        int res = receive_and_send_message(sock, cli_addr);
-        if (res == -1){break;}
+
+        int len = receive_and_send_message(sock, cli_addr);
+         if(len == -1){break;}
+        
         //send_message(sock, cli_addr, len);
     }
 
