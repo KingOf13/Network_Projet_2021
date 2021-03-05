@@ -61,7 +61,7 @@ pkt_status_code pkt_decode(const char *data, const size_t len, pkt_t *pkt)
   TYPE = TYPE>>6;
   pkt_status_code statustype = pkt_set_type(pkt,TYPE);
   if(statustype!=PKT_OK) {
-      printf("HEY\n");
+      
       return statustype;
   }
   
@@ -94,6 +94,8 @@ if(pkt_get_type(pkt) == PTYPE_DATA){
         return length_s;
     }
 }
+
+
     
 
   
@@ -150,6 +152,7 @@ if(pkt_get_type(pkt) == PTYPE_DATA){
   //printf("size %d\n", payloadLength);
   char *payload = (char *) malloc(sizeof(char)*payloadLength);
   memcpy(payload,&data[10+offset], payloadLength);
+  //printf("%s\n", payload);
   pkt_status_code payload_s = pkt_set_payload(pkt,payload,payloadLength);
   free(payload);
   if(payload_s!=PKT_OK) {
@@ -157,6 +160,7 @@ if(pkt_get_type(pkt) == PTYPE_DATA){
   }
 
 
+    
   /**** CRC32 PAYLOAD VERIFICATION ****/
   uint32_t CRC2;
   memcpy(&CRC2,&data[10 + offset + pkt->length],4);
@@ -165,7 +169,7 @@ if(pkt_get_type(pkt) == PTYPE_DATA){
   if(pkt->payload!=NULL && pkt->tr==0) {
       uint32_t crc2 = crc32(0L, Z_NULL, 0);
       crc2 = crc32(crc2,(const Bytef*) &data[10+offset], pkt->length);
-      if(CRC2!=crc2) {
+      if(CRC2!=0) {
           return E_CRC;
       }
       pkt_status_code CRC2_s = pkt_set_crc2(pkt,crc2);
@@ -173,7 +177,6 @@ if(pkt_get_type(pkt) == PTYPE_DATA){
           return CRC2_s;
       }
   }
-
   return PKT_OK;
 }
 
