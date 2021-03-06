@@ -1,6 +1,7 @@
 #include "create_socket.h"
 
 
+
 //create socket
 int create_socket(){
     int sock = socket(AF_INET6, SOCK_DGRAM, 0); 
@@ -24,9 +25,10 @@ pkt_t* receive_ack(int sock, struct sockaddr_in6  peer_addr){
     pkt_t* pkt = pkt_new();
     socklen_t len_peer = sizeof(struct sockaddr_in6);
     int n = recvfrom(sock, (char *)buf, 528, 0, (struct sockaddr *) &peer_addr, &len_peer); 
-    if(n == -1){return NULL;}
+    if(n == -1){
+        return NULL;
+    }
     pkt_decode(buf, 528, pkt);
-    printf("Server : %d\n", pkt_get_type(pkt));
     return pkt;
 }
 
@@ -34,22 +36,24 @@ pkt_t* receive_ack(int sock, struct sockaddr_in6  peer_addr){
 int receive_and_send_message(int sock, struct sockaddr_in6 cli_addr){
     char buffer[528];
     pkt_t* pkt = pkt_new();
-    socklen_t len = sizeof(cli_addr);
+    int len = sizeof(cli_addr);
     int n = recvfrom(sock, (char*) buffer, 528, 0, ( struct sockaddr *) &cli_addr, &len);
     if(n == -1){
         printf("server shutdown\n");
         return -1;
     }
     pkt_decode(buffer, 528, pkt);
-    
+    if(pkt_get_seqnum(pkt) == 3 || pkt_get_seqnum(pkt) == 4){return 0;}
     pkt_t* pkt_ack = pkt_new();
-    //printf("tr: %d\n", pkt_get_tr(pkt));
+    //printf("tr: %d\n", pkt_get_length(pkt));
     if(pkt_get_tr(pkt) == 0){
         pkt_set_type(pkt_ack, PTYPE_ACK);
     }else{
         pkt_set_type(pkt_ack, PTYPE_NACK);
-    }
-    //printf("Client : %s\n", pkt_get_payload(pkt_ack));
+        
+    } 
+    pkt_set_seqnum(pkt_ack, pkt_get_seqnum(pkt));
+    pkt_set_window(pkt_ack, 5);
     size_t* length = malloc(sizeof(int));
     *length = 1024;
     char* buf_ack = malloc(sizeof(char)*528);

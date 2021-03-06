@@ -3,6 +3,8 @@
 #include "create_socket.h"
 #include "packet_interface.h"
 
+int seqnum = 0;
+
 int print_usage(char *prog_name) {
     ERROR("Usage:\n\t%s [-s stats_filename] listen_ip listen_port", prog_name);
     return EXIT_FAILURE;
@@ -56,7 +58,7 @@ int main(int argc, char **argv) {
     struct sockaddr_in6 peer_addr = create_address(listen_ip, listen_port);
     struct sockaddr_in6 cli_addr = create_client_address();
     struct timeval tv;
-    tv.tv_sec = 100;
+    tv.tv_sec = 10;
     tv.tv_usec = 0;
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
     bind_server(sock, peer_addr);
@@ -75,6 +77,7 @@ int main(int argc, char **argv) {
     {
 
         int len = receive_and_send_message(sock, cli_addr);
+        seqnum++;
          if(len == -1){break;}
         
         //send_message(sock, cli_addr, len);
