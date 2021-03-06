@@ -43,22 +43,25 @@ int receive_and_send_message(int sock, struct sockaddr_in6 cli_addr){
         return -1;
     }
     pkt_decode(buffer, 528, pkt);
-    if(pkt_get_seqnum(pkt) == 3 || pkt_get_seqnum(pkt) == 4){return 0;}
     pkt_t* pkt_ack = pkt_new();
     //printf("tr: %d\n", pkt_get_length(pkt));
     if(pkt_get_tr(pkt) == 0){
         pkt_set_type(pkt_ack, PTYPE_ACK);
+        pkt_set_seqnum(pkt_ack, (pkt_get_seqnum(pkt)+1)%256);
     }else{
         pkt_set_type(pkt_ack, PTYPE_NACK);
+        pkt_set_seqnum(pkt_ack, pkt_get_seqnum(pkt)%256);
         
     } 
-    pkt_set_seqnum(pkt_ack, pkt_get_seqnum(pkt));
-    pkt_set_window(pkt_ack, 5);
+    
+    pkt_set_window(pkt_ack, 31);
     size_t* length = malloc(sizeof(int));
     *length = 1024;
     char* buf_ack = malloc(sizeof(char)*528);
     pkt_encode(pkt_ack, buf_ack, length);
     sendto(sock, (const char *)buf_ack, *length, 0, (const struct sockaddr *) &cli_addr, len);
+    free(length);
+    free(buf_ack);
     return len;
 }
 

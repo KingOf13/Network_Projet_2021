@@ -12,38 +12,56 @@ int print_usage(char *prog_name) {
     return EXIT_FAILURE;
 }
 
-int check_ack(pkt_t* pkt, window_t* window, int index){
-    window_val = pkt_get_window(pkt);
+int check_ack(window_t* window, int index){
     window->last_ack = index;
-    
     while (1)
     {
         if(index < 0){
             index = 31;
         }
+        //printf("index: %d\n", index);
         
         if(window->window[index%32] == NULL){
+            
             break;
         }
+        //printf("mod: %d\n", index%32);
         free(window->window[index%32]);
         window->start_time[index%32] = 0;
         window->window[index%32] = NULL;
+        
         index--;
         item_window_nb--;
-        printf("win: %d\n", item_window_nb);
+        //printf("win: %d\n", item_window_nb);
     }
     
 }
 
-int check_timer(pkt_t* pkt, window_t* window, int sock, struct sockaddr_in6 peer_addr){
+int check_nack(int index, window_t* window, int sock, struct sockaddr_in6 peer_addr){
+    char* buf = malloc(sizeof(char)*528);
+    size_t* len = malloc(sizeof(int));
+    *len = 1024;
+    pkt_encode(window->window[index], buf, len);
+    window->start_time[index] = clock();
+    send_stdin_message(sock, buf, peer_addr, *len);
+    free(buf);
+    free(len);
+}
+
+int check_timer(window_t* window, int sock, struct sockaddr_in6 peer_addr){
+    
     for (size_t i = 0; i < 32; i++)
     {
-        if(window->window[i] == NULL){continue;}
-        if(clock() - window->start_time[i] > 100){
+        pkt_t* pkt = window->window[i];
+        if(pkt == NULL){continue;}
+        //printf("%ld, %ld\n", i, clock() - window->start_time[i]);
+        if(clock() - window->start_time[i] > 200){
+            printf("add timer: %d\n", pkt_get_seqnum(pkt));
             char* buf = malloc(sizeof(char)*528);
             size_t* len = malloc(sizeof(int));
             *len = 1024;
-            pkt_encode(window->window[i], buf, len);
+            pkt_encode(pkt, buf, len);
+            window->start_time[i] = clock();
             send_stdin_message(sock, buf, peer_addr, *len);
             free(buf);
             free(len);
@@ -129,85 +147,68 @@ int main(int argc, char **argv) {
     
 
     //if no file is given, read the stdin input and send it as message to server (receiver)
-    char* line = malloc(sizeof(char)*512);
+    char* line = malloc(sizeof(char)*513);
     //make window init
     window_t* window = malloc(sizeof(window_t));
     window->last_ack = 0;
-    if (filename == NULL){
-            pollfd[1].fd = fileno(stdin);
-            pollfd[1].events = POLLIN;
-            pollfd[1].revents = 0;
-            while(1){
-                int sock_poll_res = poll(pollfd, 1, 1000);
-                printf("poll: %d\n", sock_poll_res);
-                
-                if(sock_poll_res < 0){
-                    printf("error with poll\n");
-                }
-                if(pollfd[1].revents & POLLIN){
-                    printf("hey\n");
-                }
-                int res = fread(line, 512, 1, stdin);
-                //printf("%s\n", line);
-                //send_stdin_message(sock, line, peer_addr);
-                pkt_t* pkt_ack = receive_ack(sock, peer_addr);
-                if(pkt_ack == NULL){
-                    printf("No anwser from server\n");
-                }
-                if(res != 1){break;}
-            }
-            
+    FILE* fp;
+    if (filename == NULL)
+    {
+        fp = stdin;
+        pollfd[1].fd = fileno(stdin);
+        pollfd[1].events = POLLIN;
+        pollfd[1].revents = 0;
     }else{
-        FILE* fp = fopen(filename, "r");
+        fp = fopen(filename, "r");
         if (fp == NULL){return -1;}
         pollfd[1].fd = fileno(fp);
         pollfd[1].events = POLLIN;
         pollfd[1].revents = 0;
-        int res = 1;
-        while(1){
-           
-            int sock_poll_res = poll(pollfd, 2, 1000);
-            
-            if(sock_poll_res < 0){
-                printf("error with poll\n");
-            }
-            if(sock_poll_res == 0){continue;}
-            printf("%d, %d, %d, %d, %d\n", seqnum, window->last_ack, window_val, res, item_window_nb);
-            if((pollfd[1].revents & POLLIN) && res == 1 && seqnum <= window->last_ack+window_val){
-                
-                res = fread(line, 512, 1, fp);
-                printf("HEY\n");
-                pkt_t* pkt = pkt_new();
-                pkt_set_type(pkt, PTYPE_DATA);
-                pkt_set_tr(pkt, 0);
-                pkt_set_window(pkt, window_val);
-                pkt_set_timestamp(pkt, 0);
-                pkt_set_seqnum(pkt, seqnum);
-                pkt_set_length(pkt, 512);
-                pkt_set_payload(pkt, line, 512);
-                window->window[seqnum%32] = pkt;
-                item_window_nb++;
-                printf("add: %d\n", seqnum);
-                char* buf = malloc(sizeof(char)*528);
-                size_t* len = malloc(sizeof(int));
-                *len = 1024;
-                pkt_encode(pkt, buf, len);
-                window->start_time[seqnum] = clock();
-                seqnum = (seqnum+1)%255;
-                send_stdin_message(sock, buf, peer_addr, *len);
-                free(buf);
-                free(len);
-                memset(line, 0, 512);
-            }
-            if(pollfd[0].revents & POLLIN){
-                pkt_t* pkt_ack = receive_ack(sock, peer_addr);
-                printf("ack: %d\n", pkt_get_seqnum(pkt_ack));
-                check_ack(pkt_ack, window, pkt_get_seqnum(pkt_ack));
-            }
-            
-            if(res != 1 && item_window_nb <= 0){break;}
+    }
+    
+    int res = 1;
+    while(1){
+        int sock_poll_res = poll(pollfd, 2, 1000);
+        if(sock_poll_res < 0){
+            printf("error with poll\n");
         }
-        //fclose(fp);
+        if(pollfd[1].revents & POLLIN && res == 1 && seqnum <= window->last_ack+window_val){
+            res = fread(line, 512, 1, fp);
+            pkt_t* pkt = pkt_new();
+            pkt_set_type(pkt, PTYPE_DATA);
+            pkt_set_tr(pkt, 0);
+            pkt_set_window(pkt, window_val);
+            pkt_set_timestamp(pkt, 0);
+            pkt_set_seqnum(pkt, seqnum);
+            pkt_set_length(pkt, 512);
+            pkt_set_payload(pkt, line, 512);
+            window->window[seqnum%32] = pkt;
+            item_window_nb++;
+            printf("add: %d\n", seqnum);
+            char* buf = malloc(sizeof(char)*528);
+            size_t* len = malloc(sizeof(int));
+            *len = 1024;
+            pkt_encode(pkt, buf, len);
+            window->start_time[seqnum%32] = clock();
+            seqnum = (seqnum+1)%256;
+            send_stdin_message(sock, buf, peer_addr, *len);
+            free(buf);
+            free(len);
+            memset(line, 0, 512);
+        }
+        if(pollfd[0].revents & POLLIN){
+            pkt_t* pkt_ack = receive_ack(sock, peer_addr);
+            printf("ack: %d\n", pkt_get_seqnum(pkt_ack)-1);
+            if(pkt_get_type(pkt_ack) == PTYPE_NACK){
+                check_nack(pkt_get_seqnum(pkt_ack), window, sock, peer_addr);
+            }else if(pkt_get_type(pkt_ack) == PTYPE_ACK){
+                check_ack(window, pkt_get_seqnum(pkt_ack)-1);
+            }
+            window_val = pkt_get_window(pkt_ack);
+            
+        }
+        check_timer(window, sock, peer_addr);
+        if(res != 1 && item_window_nb <= 0){break;}
     }
     
     
@@ -217,7 +218,7 @@ int main(int argc, char **argv) {
      * **********/
     for (size_t i = 0; i < 32; i++)
     {
-        //printf("OUI\n");
+       // printf("OUI\n");
        if(window->window[i] != NULL){
            printf("WTF\n");
        }
