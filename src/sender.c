@@ -167,7 +167,6 @@ int main(int argc, char **argv) {
     /*************
      * end file handling
      * **********/
-    printf("%d\n", data_sent);
     for (size_t i = 0; i < 32; i++)
     {
        // printf("OUI\n");
