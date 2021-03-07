@@ -41,7 +41,7 @@ void pkt_del(pkt_t *pkt)
 pkt_status_code pkt_decode(const char *data, const size_t len, pkt_t *pkt)
 {
     
-  if(len==0 || data==NULL) {
+  if(len==0) {
       return E_UNCONSISTENT;
   }
 
@@ -152,7 +152,7 @@ if(pkt_get_type(pkt) == PTYPE_DATA){
   //printf("size %d\n", payloadLength);
   char *payload = (char *) malloc(sizeof(char)*payloadLength);
   memcpy(payload,&data[10+offset], payloadLength);
-  //printf("%s\n", payload);
+  //printf("payload: %s\n", payload);
   pkt_status_code payload_s = pkt_set_payload(pkt,payload,payloadLength);
   free(payload);
   if(payload_s!=PKT_OK) {
@@ -324,6 +324,7 @@ pkt_status_code pkt_set_window(pkt_t *pkt, const uint8_t window)
 
 pkt_status_code pkt_set_seqnum(pkt_t *pkt, const uint8_t seqnum)
 {
+    if(seqnum > 255){return E_SEQNUM;}
     pkt->seqnum = seqnum;
     return PKT_OK;
 }
@@ -362,7 +363,7 @@ pkt_status_code pkt_set_payload(pkt_t *pkt,
     if(pkt == NULL) {
         return E_UNCONSISTENT;
     }
-    if(data == NULL || length >512){
+    if(length >512){
         return E_LENGTH;
     }
 

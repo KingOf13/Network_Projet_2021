@@ -58,8 +58,8 @@ zip:
 	rm gitlog.stat
 
 comp:
-	gcc src/sender.c src/create_socket.c src/packet_implem.c -lz -o src/sender
-	gcc src/receiver.c src/create_socket.c src/packet_implem.c -lz -o src/receiver
+	gcc src/sender.c src/create_socket.c src/packet_implem.c src/selective_repeat.c src/handle_message.c -lz -o src/sender
+	gcc src/receiver.c src/create_socket.c src/packet_implem.c src/selective_repeat.c src/handle_message.c -lz -o src/receiver
 
 run:
-	./src/receiver :: 12345 | ./src/sender ::1 12345 -f src/boris.txt
+	./src/receiver :: 12345 | ./src/sender ::1 12345 -f src/test.txt

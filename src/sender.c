@@ -2,73 +2,24 @@
 #include "create_socket.h"
 #include "packet_interface.h"
 #include "selective_repeat.h"
+#include "handle_message.h"
 
 int item_window_nb = 0;
 int seqnum = 0;
 int window_val = 1;
+extern int ack_received;
+extern int nack_received;
+extern int data_sent;
+int packet_ignored;
+extern time_t min_rtt;
+extern time_t max_rtt;
+extern int packet_retransmitted;
 
 int print_usage(char *prog_name) {
     ERROR("Usage:\n\t%s [-f filename] [-s stats_filename] receiver_ip receiver_port", prog_name);
     return EXIT_FAILURE;
 }
 
-int check_ack(window_t* window, int index){
-    window->last_ack = index;
-    while (1)
-    {
-        if(index < 0){
-            index = 31;
-        }
-        //printf("index: %d\n", index);
-        
-        if(window->window[index%32] == NULL){
-            
-            break;
-        }
-        //printf("mod: %d\n", index%32);
-        free(window->window[index%32]);
-        window->start_time[index%32] = 0;
-        window->window[index%32] = NULL;
-        
-        index--;
-        item_window_nb--;
-        //printf("win: %d\n", item_window_nb);
-    }
-    
-}
-
-int check_nack(int index, window_t* window, int sock, struct sockaddr_in6 peer_addr){
-    char* buf = malloc(sizeof(char)*528);
-    size_t* len = malloc(sizeof(int));
-    *len = 1024;
-    pkt_encode(window->window[index], buf, len);
-    window->start_time[index] = clock();
-    send_stdin_message(sock, buf, peer_addr, *len);
-    free(buf);
-    free(len);
-}
-
-int check_timer(window_t* window, int sock, struct sockaddr_in6 peer_addr){
-    
-    for (size_t i = 0; i < 32; i++)
-    {
-        pkt_t* pkt = window->window[i];
-        if(pkt == NULL){continue;}
-        //printf("%ld, %ld\n", i, clock() - window->start_time[i]);
-        if(clock() - window->start_time[i] > 200){
-            printf("add timer: %d\n", pkt_get_seqnum(pkt));
-            char* buf = malloc(sizeof(char)*528);
-            size_t* len = malloc(sizeof(int));
-            *len = 1024;
-            pkt_encode(pkt, buf, len);
-            window->start_time[i] = clock();
-            send_stdin_message(sock, buf, peer_addr, *len);
-            free(buf);
-            free(len);
-        }
-    }
-    
-}
 
 int main(int argc, char **argv) {
     /*************
@@ -135,7 +86,7 @@ int main(int argc, char **argv) {
      * file handling
      * **********/
 
-    //timeout to prevent recvfrom to block code
+    //poll init to check if there is a message on the socket
     struct timeval tv;
     tv.tv_sec = 0;
     tv.tv_usec = 0;
@@ -147,10 +98,9 @@ int main(int argc, char **argv) {
     
 
     //if no file is given, read the stdin input and send it as message to server (receiver)
-    char* line = malloc(sizeof(char)*513);
+    char* line = malloc(sizeof(char)*512);
     //make window init
-    window_t* window = malloc(sizeof(window_t));
-    window->last_ack = 0;
+    window_sender_t* window = window_sender_init();
     FILE* fp;
     if (filename == NULL)
     {
@@ -172,7 +122,7 @@ int main(int argc, char **argv) {
         if(sock_poll_res < 0){
             printf("error with poll\n");
         }
-        if(pollfd[1].revents & POLLIN && res == 1 && seqnum <= window->last_ack+window_val){
+        if(pollfd[1].revents & POLLIN && res == 1 && seqnum < window->last_ack+window_val){
             res = fread(line, 512, 1, fp);
             pkt_t* pkt = pkt_new();
             pkt_set_type(pkt, PTYPE_DATA);
@@ -184,38 +134,40 @@ int main(int argc, char **argv) {
             pkt_set_payload(pkt, line, 512);
             window->window[seqnum%32] = pkt;
             item_window_nb++;
-            printf("add: %d\n", seqnum);
-            char* buf = malloc(sizeof(char)*528);
-            size_t* len = malloc(sizeof(int));
-            *len = 1024;
-            pkt_encode(pkt, buf, len);
+            printf("send: %d\n", seqnum);
             window->start_time[seqnum%32] = clock();
+            int ans = send_message(sock, pkt, peer_addr);
+            if(ans == -1){printf("Error in sending packet n°%d", seqnum);}
             seqnum = (seqnum+1)%256;
-            send_stdin_message(sock, buf, peer_addr, *len);
-            free(buf);
-            free(len);
             memset(line, 0, 512);
         }
         if(pollfd[0].revents & POLLIN){
             pkt_t* pkt_ack = receive_ack(sock, peer_addr);
             printf("ack: %d\n", pkt_get_seqnum(pkt_ack)-1);
             if(pkt_get_type(pkt_ack) == PTYPE_NACK){
-                check_nack(pkt_get_seqnum(pkt_ack), window, sock, peer_addr);
+                nack_received++;
+                resend_nack(pkt_get_seqnum(pkt_ack), window, sock, peer_addr);
             }else if(pkt_get_type(pkt_ack) == PTYPE_ACK){
-                check_ack(window, pkt_get_seqnum(pkt_ack)-1);
-            }
+                ack_received++;
+                item_window_nb = check_ack(window, pkt_get_seqnum(pkt_ack)-1, item_window_nb);
+            }else{packet_ignored++;}
             window_val = pkt_get_window(pkt_ack);
-            
+            pkt_del(pkt_ack);
         }
-        check_timer(window, sock, peer_addr);
+        //check_timer(window, sock, peer_addr);
         if(res != 1 && item_window_nb <= 0){break;}
     }
-    
-    
+    pkt_t* last_pkt = pkt_new();
+    pkt_set_type(last_pkt, PTYPE_DATA);
+    pkt_set_seqnum(last_pkt, window->last_ack);
+    send_message(sock, last_pkt, peer_addr);
+    data_sent--;
+    pkt_del(last_pkt);
 
     /*************
      * end file handling
      * **********/
+    printf("%d\n", data_sent);
     for (size_t i = 0; i < 32; i++)
     {
        // printf("OUI\n");
