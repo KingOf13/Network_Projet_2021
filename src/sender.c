@@ -154,9 +154,10 @@ int main(int argc, char **argv) {
             window_val = pkt_get_window(pkt_ack);
             pkt_del(pkt_ack);
         }
-        //check_timer(window, sock, peer_addr);
+        check_timer(window, sock, peer_addr);
         if(res != 1 && item_window_nb <= 0){break;}
     }
+    if(filename != NULL){fclose(fp);}
     pkt_t* last_pkt = pkt_new();
     pkt_set_type(last_pkt, PTYPE_DATA);
     pkt_set_seqnum(last_pkt, window->last_ack);
@@ -184,7 +185,19 @@ int main(int argc, char **argv) {
 
     if (stats_filename != NULL)
     {
-        
+        FILE* fp = fopen(stats_filename, "w+");
+        fprintf(fp,"data_sent:%d\n", data_sent);
+        fprintf(fp,"data_received:%d\n", 0);
+        fprintf(fp,"data_truncated_received:%d\n", 0);
+        fprintf(fp,"ack_sent:%d\n", 0);
+        fprintf(fp,"ack_received:%d\n", ack_received);
+        fprintf(fp,"nack_sent:%d\n", 0);
+        fprintf(fp,"nack_received:%d\n", nack_received);
+        fprintf(fp,"packet_ignored:%d\n", packet_ignored);
+        fprintf(fp,"min_rtt:%ld\n", min_rtt/1000);
+        fprintf(fp,"max_rtt:%ld\n", max_rtt/1000);
+        fprintf(fp,"packets_retransmitted:%d\n", packet_retransmitted);
+        fclose(fp);
     }
     
 

@@ -62,4 +62,4 @@ comp:
 	gcc src/receiver.c src/create_socket.c src/packet_implem.c src/selective_repeat.c src/handle_message.c -lz -o src/receiver
 
 run:
-	./src/receiver :: 12345 | ./src/sender ::1 12345 -f src/test.txt
+	./src/receiver -s src/stats_receiver.csv :: 12345 2>log.txt | ./src/sender ::1 12345 -f src/test.txt -s src/stats_sender.csv

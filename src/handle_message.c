@@ -63,6 +63,7 @@ int receive_and_send_message(int sock, struct sockaddr_in6 cli_addr){
     }else{
         pkt_set_type(pkt_ack, PTYPE_NACK);
         pkt_set_seqnum(pkt_ack, pkt_get_seqnum(pkt)%256);
+        data_truncated_received++;
     } 
     seqnum_receiver++;
     pkt_set_window(pkt_ack, 31);
@@ -79,7 +80,7 @@ int receive_and_send_message(int sock, struct sockaddr_in6 cli_addr){
     return len;
 }
 
-//send message from stdin input "./sender ::1 12345 < file.txt"
+//send message 
 int send_message(int sock, pkt_t* pkt, struct sockaddr_in6 peer_addr){
     char* buffer = malloc(sizeof(char)*528);
     size_t* len = malloc(sizeof(int));
