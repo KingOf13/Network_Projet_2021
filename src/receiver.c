@@ -4,6 +4,11 @@
 #include "packet_interface.h"
 #include "handle_message.h"
 
+extern int data_received;
+extern int data_truncated_received;
+extern int ack_sent; 
+extern int nack_sent;
+extern int packet_duplicated;
 int seqnum = 0;
 
 int print_usage(char *prog_name) {
@@ -94,10 +99,20 @@ int main(int argc, char **argv) {
     /*************
      * stats file handling
      * **********/
-
+    data_received--;
     if (stats_filename != NULL)
     {
-        
+        FILE* fp = fopen(stats_filename, "w+");
+        fprintf(fp,"data_sent:%d\n", 0);
+        fprintf(fp,"data_received:%d\n", data_received);
+        fprintf(fp,"data_truncated_received:%d\n", data_truncated_received);
+        fprintf(fp,"ack_sent:%d\n", ack_sent);
+        fprintf(fp,"ack_received:%d\n", 0);
+        fprintf(fp,"nack_sent:%d\n", nack_sent);
+        fprintf(fp,"nack_received:%d\n", 0);
+        fprintf(fp,"packet_ignored:%d\n", 0);
+        fprintf(fp, "packet_duplicated:%d\n", packet_duplicated);
+        fclose(fp);
     }
     
 

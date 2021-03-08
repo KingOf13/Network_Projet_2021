@@ -1,7 +1,7 @@
 #include "selective_repeat.h"
 
 int packet_retransmitted = 0;
-time_t min_rtt = 0;
+time_t min_rtt = 100000000;
 time_t max_rtt = 0;
 
 
