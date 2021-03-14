@@ -9,6 +9,9 @@ CFLAGS += -D_COLOR
 # You may want to add something here
 LDFLAGS += -lz
 
+#supp CFILE
+CFILE=src/create_socket.c src/selective_repeat.c src/handle_message.c src/packet_implem.c
+
 # Adapt these as you want to fit with your project
 SENDER_SOURCES = $(wildcard src/sender.c src/log.c)
 RECEIVER_SOURCES = $(wildcard src/receiver.c src/log.c)
@@ -22,13 +25,13 @@ RECEIVER = receiver
 all: $(SENDER) $(RECEIVER)
 
 $(SENDER): $(SENDER_OBJECTS)
-	$(CC) $(SENDER_OBJECTS) -o $@ $(LDFLAGS)
+	$(CC) $(SENDER_OBJECTS) $(CFILE) $(LDFLAGS) -o $@ 
 
 $(RECEIVER): $(RECEIVER_OBJECTS)
-	$(CC) $(RECEIVER_OBJECTS) -o $@ $(LDFLAGS)
+	$(CC) $(RECEIVER_OBJECTS) $(CFILE) $(LDFLAGS) -o $@
 
 %.o: %.c
-	$(CC) $(CFLAGS) $< -o $@ $(LDFLAGS)
+	$(CC) $(CFLAGS) $< $(CFILE) $(LDFLAGS) -o $@
 
 .PHONY: clean mrproper
 

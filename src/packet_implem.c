@@ -41,7 +41,7 @@ void pkt_del(pkt_t *pkt)
 pkt_status_code pkt_decode(const char *data, const size_t len, pkt_t *pkt)
 {
     
-  if(len==0) {
+  if(len==0 || data==NULL) {
       return E_UNCONSISTENT;
   }
 

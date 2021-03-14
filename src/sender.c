@@ -75,6 +75,7 @@ int main(int argc, char **argv) {
     if(sock == -1){return -1;}
 
     //connect not necessary in UDP (normally)
+    
     /*int connect = connect_to_server(sock, peer_addr);
     if(connect == -1){return -1;}*/
 
@@ -136,8 +137,11 @@ int main(int argc, char **argv) {
             item_window_nb++;
             printf("send: %d\n", seqnum);
             window->start_time[seqnum%32] = clock();
-            int ans = send_message(sock, pkt, peer_addr);
-            if(ans == -1){printf("Error in sending packet n°%d", seqnum);}
+            while(send_message(sock, pkt, peer_addr) == -1){
+                printf("Error while encoding packet %d\n", seqnum);
+                pkt_set_length(pkt, 512);
+                pkt_set_payload(pkt, line, 512);
+            }
             seqnum = (seqnum+1)%256;
             memset(line, 0, 512);
         }

@@ -7,7 +7,7 @@ int ack_received = 0;
 int nack_sent = 0;
 int nack_received = 0;
 int packet_duplicated = 0;
-int seqnum_receiver = 1;
+int seqnum_receiver = 0;
 
 
 //receive message back from server
@@ -74,7 +74,9 @@ int receive_and_send_message(int sock, struct sockaddr_in6 cli_addr){
     sendto(sock, (const char *)buf_ack, *length, 0, (const struct sockaddr *) &cli_addr, len);
     free(length);
     free(buf_ack);*/
-    send_message(sock, pkt_ack, cli_addr);
+    while(send_message(sock, pkt_ack, cli_addr) == -1){
+        printf("Error while sending ack %d\n", seqnum_receiver);
+    }
     pkt_del(pkt);
     pkt_del(pkt_ack);
     return len;
