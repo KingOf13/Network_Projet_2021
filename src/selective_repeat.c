@@ -20,6 +20,7 @@ window_receiver_t* init_receiver_window(){
   window_receiver_t* receive_window = malloc(sizeof(window_receiver_t));
   if (receive_window == NULL) return NULL;
   receive_window->next_seqnum = 0;
+  receive_window->window_val = 32;
   receive_window->window_size = 32;
   for(int i=0; i<32; i++) {
     receive_window->window[i] = NULL;
@@ -71,7 +72,7 @@ int check_timer(window_sender_t* window, int sock, struct sockaddr_in6 peer_addr
         if(pkt == NULL){continue;}
         //printf("%ld, %ld\n", i, clock() - window->start_time[i]);
         if(clock() - window->start_time[i] > 500){
-            printf("add timer: %d\n", pkt_get_seqnum(pkt));
+            //printf("add timer: %d\n", pkt_get_seqnum(pkt));
             window->start_time[i] = clock();
             send_message(sock, pkt, peer_addr);
             packet_retransmitted++;

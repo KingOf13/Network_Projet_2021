@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
         if(sock_poll_res < 0){
             printf("error with poll\n");
         }
-        //printf("%d, %d, %d\n", seqnum, window->last_ack, window_val);
+        printf("%d, %d, %d\n", seqnum, window->last_ack, window_val);
         if(pollfd[1].revents & POLLIN && res == 1 && seqnum < window->last_ack+window_val){
             res = fread(line, 512, 1, fp);
             pkt_t* pkt = pkt_new();
@@ -164,6 +164,7 @@ int main(int argc, char **argv) {
         check_timer(window, sock, peer_addr);
         if(res != 1 && item_window_nb <= 0){break;}
     }
+    //printf("last: %d, %d\n", seqnum, window->last_ack);
     if(filename != NULL){fclose(fp);}
     pkt_t* last_pkt = pkt_new();
     pkt_set_type(last_pkt, PTYPE_DATA);

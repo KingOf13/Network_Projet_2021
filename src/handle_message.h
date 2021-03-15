@@ -16,6 +16,7 @@ typedef struct window_receiver {
         int window_size;
         pkt_t* window[32];
         int next_seqnum;
+        int window_val;
 }window_receiver_t;
 
 window_receiver_t* init_receiver_window();

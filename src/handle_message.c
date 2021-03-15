@@ -32,12 +32,14 @@ bool process_pkt(pkt_t *pkt, window_receiver_t* window_receiver){
     if (pkt_get_seqnum(pkt) == window_receiver->next_seqnum) {
       int place = window_receiver->next_seqnum % window_receiver->window_size;
       window_receiver->window[place] = pkt;
+      window_receiver->window_val--;
       while (window_receiver->window[place] != NULL){
         //printf("i: %d\n", place);
         pkt_t* win_pack = window_receiver->window[place];
-        printf("%s", pkt_get_payload(win_pack));
+        //printf("%s", pkt_get_payload(win_pack));
         pkt_del(win_pack);
         window_receiver->window[place] = NULL;
+        window_receiver->window_val++;
         place = (place+1) % window_receiver->window_size;
         seqnum_receiver++;
       }
@@ -52,6 +54,7 @@ bool process_pkt(pkt_t *pkt, window_receiver_t* window_receiver){
       } 
       else {
         window_receiver->window[place] = pkt;
+        window_receiver->window_val--;
       }
     }
   }
@@ -83,8 +86,7 @@ int receive_and_send_message(int sock, struct sockaddr_in6 cli_addr, window_rece
         printf("server shutdown\n");
         return -1;
     }
-    /*if(seqnum == 3 || seqnum == 4){
-      seqnum++;
+    /*if(seqnum % 2 == 0){
       return 0;
     }*/
     int decode_status = pkt_decode(buffer, 528, pkt);
@@ -92,7 +94,7 @@ int receive_and_send_message(int sock, struct sockaddr_in6 cli_addr, window_rece
         packet_ignored_by_receiver++;
         return 0;
     }
-    //printf("lastseq: %d, %d, %d\n", pkt_get_seqnum(pkt), seqnum_receiver-1, pkt_get_length(pkt));
+    printf("lastseq: %d, %d, %d\n", pkt_get_seqnum(pkt), seqnum_receiver-1, pkt_get_length(pkt));
     pkt_t* pkt_ack = pkt_new();
     //printf("tr: %d\n", pkt_get_length(pkt));
     if(pkt_get_tr(pkt) == 0){
@@ -118,7 +120,7 @@ int receive_and_send_message(int sock, struct sockaddr_in6 cli_addr, window_rece
     }
     
     pkt_set_timestamp(pkt_ack, pkt_get_timestamp(pkt));
-    pkt_set_window(pkt_ack, (window_receiver->window_size)-1);
+    pkt_set_window(pkt_ack, (window_receiver->window_val)-1);
     send_message(sock, pkt_ack, cli_addr);
     pkt_del(pkt_ack);
     return len;
