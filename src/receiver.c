@@ -3,12 +3,14 @@
 #include "create_socket.h"
 #include "packet_interface.h"
 #include "handle_message.h"
+#include "selective_repeat.h"
 
 extern int data_received;
 extern int data_truncated_received;
-extern int ack_sent; 
+extern int ack_sent;
 extern int nack_sent;
 extern int packet_duplicated;
+extern int packet_ignored_by_receiver;
 int seqnum = 0;
 
 int print_usage(char *prog_name) {
@@ -55,7 +57,7 @@ int main(int argc, char **argv) {
     /*************
      * end given argument handling part
      * **********/
-    
+
 
     /*************
      * socket address and bind creation
@@ -63,10 +65,10 @@ int main(int argc, char **argv) {
     int sock = create_socket();
     struct sockaddr_in6 peer_addr = create_address(listen_ip, listen_port);
     struct sockaddr_in6 cli_addr = create_client_address();
-    /*struct timeval tv;
-    tv.tv_sec = 10;
+    struct timeval tv;
+    tv.tv_sec = 0;
     tv.tv_usec = 0;
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);*/
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
     bind_server(sock, peer_addr);
 
     /*************
@@ -77,29 +79,26 @@ int main(int argc, char **argv) {
      * message handling
      * **********/
     //timeout to prevent recvfrom to block code
+    window_receiver_t* window_buffer = init_receiver_window();
     
-
+    
     while (1)
     {
-
-        int len = receive_and_send_message(sock, cli_addr);
+        int len = receive_and_send_message(sock, cli_addr, window_buffer);
         seqnum++;
-         if(len == -1){break;}
-        
-        //send_message(sock, cli_addr, len);
+        if(len == -1){break;}
     }
 
     close(sock);
-    
+
     /*************
      * end message handling
      * **********/
 
-    
+
     /*************
      * stats file handling
      * **********/
-    data_received--;
     if (stats_filename != NULL)
     {
         FILE* fp = fopen(stats_filename, "w+");
@@ -110,20 +109,20 @@ int main(int argc, char **argv) {
         fprintf(fp,"ack_received:%d\n", 0);
         fprintf(fp,"nack_sent:%d\n", nack_sent);
         fprintf(fp,"nack_received:%d\n", 0);
-        fprintf(fp,"packet_ignored:%d\n", 0);
+        fprintf(fp,"packet_ignored:%d\n", packet_ignored_by_receiver);
         fprintf(fp, "packet_duplicated:%d\n", packet_duplicated);
         fclose(fp);
     }
-    
+
 
     /*************
      * end stats file handling
      * **********/
-    
-    
 
-    
-    
+
+
+
+
     /*************
      * given test + debug part
      * **********/

@@ -10,7 +10,7 @@ int window_val = 1;
 extern int ack_received;
 extern int nack_received;
 extern int data_sent;
-int packet_ignored;
+int packet_ignored_by_sender;
 extern time_t min_rtt;
 extern time_t max_rtt;
 extern int packet_retransmitted;
@@ -123,6 +123,7 @@ int main(int argc, char **argv) {
         if(sock_poll_res < 0){
             printf("error with poll\n");
         }
+        //printf("%d, %d, %d\n", seqnum, window->last_ack, window_val);
         if(pollfd[1].revents & POLLIN && res == 1 && seqnum < window->last_ack+window_val){
             res = fread(line, 512, 1, fp);
             pkt_t* pkt = pkt_new();
@@ -142,19 +143,21 @@ int main(int argc, char **argv) {
                 pkt_set_length(pkt, 512);
                 pkt_set_payload(pkt, line, 512);
             }
+            data_sent++;
             seqnum = (seqnum+1)%256;
             memset(line, 0, 512);
         }
         if(pollfd[0].revents & POLLIN){
             pkt_t* pkt_ack = receive_ack(sock, peer_addr);
-            printf("ack: %d\n", pkt_get_seqnum(pkt_ack)-1);
+            if(pkt_ack == NULL){continue;}
+            printf("ack: %d\n", pkt_get_seqnum(pkt_ack));
             if(pkt_get_type(pkt_ack) == PTYPE_NACK){
                 nack_received++;
                 resend_nack(pkt_get_seqnum(pkt_ack), window, sock, peer_addr);
             }else if(pkt_get_type(pkt_ack) == PTYPE_ACK){
                 ack_received++;
-                item_window_nb = check_ack(window, pkt_get_seqnum(pkt_ack)-1, item_window_nb);
-            }else{packet_ignored++;}
+                item_window_nb = check_ack(window, pkt_get_seqnum(pkt_ack), item_window_nb);
+            }else{packet_ignored_by_sender++;}
             window_val = pkt_get_window(pkt_ack);
             pkt_del(pkt_ack);
         }
@@ -166,7 +169,6 @@ int main(int argc, char **argv) {
     pkt_set_type(last_pkt, PTYPE_DATA);
     pkt_set_seqnum(last_pkt, window->last_ack);
     send_message(sock, last_pkt, peer_addr);
-    data_sent--;
     pkt_del(last_pkt);
 
     /*************
@@ -197,7 +199,7 @@ int main(int argc, char **argv) {
         fprintf(fp,"ack_received:%d\n", ack_received);
         fprintf(fp,"nack_sent:%d\n", 0);
         fprintf(fp,"nack_received:%d\n", nack_received);
-        fprintf(fp,"packet_ignored:%d\n", packet_ignored);
+        fprintf(fp,"packet_ignored:%d\n", packet_ignored_by_sender);
         fprintf(fp,"min_rtt:%ld\n", min_rtt/1000);
         fprintf(fp,"max_rtt:%ld\n", max_rtt/1000);
         fprintf(fp,"packets_retransmitted:%d\n", packet_retransmitted);

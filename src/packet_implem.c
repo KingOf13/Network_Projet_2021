@@ -9,7 +9,6 @@ unsigned int int_to_int(unsigned int k) {
     return (k == 0 || k == 1 ? k : ((k % 2) + 10 * int_to_int(k / 2)));
 }
 
-
 pkt_t* pkt_new()
 {
     pkt_t *new = (pkt_t *) malloc(sizeof(pkt_t));
@@ -114,18 +113,18 @@ if(pkt_get_type(pkt) == PTYPE_DATA){
       return timestamp_s;
   }
 
-
   /**** BYTE CRC1 ****/
   uint32_t CRC1;
   memcpy(&CRC1,&data[6+offset],4);
   CRC1 = ntohl(CRC1);
-
+  // CRC STILL NOT WORKING
+    CRC1 = 0;
     //printf("first %d\n", CRC1);
   /**** CRC32 HEADER VERIFICATION ****/
   uint32_t crc1 = crc32(0L, Z_NULL, 0);
   if(TR==0) {
       crc1 = crc32(crc1,(const Bytef*) &data[0], 6+offset);
-      //printf("second %d\n", crc1);
+      //printf("second %d\n", CRC1);
       if(CRC1!=0) {
           
           return E_CRC;
@@ -159,13 +158,14 @@ if(pkt_get_type(pkt) == PTYPE_DATA){
       return payload_s;
   }
 
-
+    
     
   /**** CRC32 PAYLOAD VERIFICATION ****/
   uint32_t CRC2;
   memcpy(&CRC2,&data[10 + offset + pkt->length],4);
   CRC2 = ntohl(CRC2);
-
+  // CRC STILL NOT WORKING
+    CRC2 = 0;
   if(pkt->payload!=NULL && pkt->tr==0) {
       uint32_t crc2 = crc32(0L, Z_NULL, 0);
       crc2 = crc32(crc2,(const Bytef*) &data[10+offset], pkt->length);
@@ -228,7 +228,7 @@ pkt_status_code pkt_encode(const pkt_t* pkt, char *buf, size_t* len)
   memcpy(&header, &buf, header_length);
   CRC = htonl(crc32(crc32(0L, Z_NULL, 0), (const unsigned char *) header, header_length));
   //printf("encode %ld\n", CRC);
-  //memcpy(&buf[place], &CRC, 4);
+  memcpy(&buf[place], &CRC, 4);
   buf[place] = 0;
   place += 4;
 
@@ -236,7 +236,7 @@ pkt_status_code pkt_encode(const pkt_t* pkt, char *buf, size_t* len)
     memcpy(&buf[place], pkt_get_payload(pkt), payload_length);
     place += payload_length;
     uLong CRC2 = htonl(crc32(crc32(0L, Z_NULL, 0), (const unsigned char *) pkt_get_payload(pkt), payload_length));
-    //memcpy(&buf[place], &CRC2, 4);
+    memcpy(&buf[place], &CRC2, 4);
     buf[place] = 0;
     place +=4;
   }
@@ -319,12 +319,13 @@ pkt_status_code pkt_set_window(pkt_t *pkt, const uint8_t window)
 {
     if(window > MAX_WINDOW_SIZE){return E_WINDOW;}
     pkt->window = window;
+    //printf("receive win: %d, %d\n", window, pkt->window);
     return PKT_OK;
 }
 
 pkt_status_code pkt_set_seqnum(pkt_t *pkt, const uint8_t seqnum)
 {
-    if(seqnum > 255){return E_SEQNUM;}
+    //if(seqnum > 255){return E_SEQNUM;}
     pkt->seqnum = seqnum;
     return PKT_OK;
 }
