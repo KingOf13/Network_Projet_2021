@@ -106,7 +106,7 @@ uint32_t pkt_get_crc1     (const pkt_t*);
 /* Renvoie un pointeur vers le payload du paquet, ou NULL s'il n'y
  * en a pas.
  */
-char* pkt_get_payload(const pkt_t*);
+const char* pkt_get_payload(const pkt_t*);
 /* Renvoie le CRC2 dans l'endianness native de la machine. Si
  * ce field n'est pas present, retourne 0.
  */
