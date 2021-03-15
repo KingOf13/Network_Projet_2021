@@ -8,17 +8,54 @@ int nack_sent = 0;
 int nack_received = 0;
 int packet_duplicated = 0;
 int seqnum_receiver = 0;
+int packet_ignored_by_receiver = 0;
 int next_seqnum = 0;
-size_t MAX_PAYLOAD_SIZE = 512;
+int extern seqnum;
 
-typedef struct windowed_buffer {
-        int curseur = 0;
-        int window_size = 0;
-        char* buffer[32];
-        int next_seqnum=0;
-        int len[32];
-}w_buffer;
+//check if received seqnum is in the valid range
+bool is_valid_seqnum(int next_seqnum, int window_size, int pkt_seqnum){
+  //printf("%d, %d, %d\n", next_seqnum, window_size, pkt_seqnum);
+  if (next_seqnum + window_size > 256){
+    if (pkt_seqnum >= next_seqnum || next_seqnum + window_size - 256 > pkt_seqnum) return true;
+    else return false;
+  }
+  else{
+    if (pkt_seqnum >= next_seqnum && next_seqnum + window_size > pkt_seqnum) return true;
+    else return false;
+  }
+}
 
+//check if pkt has the expected seqnum, otherwise store it in buffer
+bool process_pkt(pkt_t *pkt, window_receiver_t* window_receiver){
+  if (is_valid_seqnum(window_receiver->next_seqnum, window_receiver->window_size, pkt_get_seqnum(pkt))) {
+      data_received++;
+    if (pkt_get_seqnum(pkt) == window_receiver->next_seqnum) {
+      int place = window_receiver->next_seqnum % window_receiver->window_size;
+      window_receiver->window[place] = pkt;
+      while (window_receiver->window[place] != NULL){
+        //printf("i: %d\n", place);
+        pkt_t* win_pack = window_receiver->window[place];
+        printf("%s", pkt_get_payload(win_pack));
+        pkt_del(win_pack);
+        window_receiver->window[place] = NULL;
+        place = (place+1) % window_receiver->window_size;
+        seqnum_receiver++;
+      }
+      window_receiver->next_seqnum = seqnum_receiver%256;
+      return true;
+    }
+    else {
+      int place = pkt_get_seqnum(pkt) % window_receiver->window_size;
+      if (window_receiver->window[place] != NULL){
+        packet_duplicated++;
+        return false;
+      } 
+      else {
+        window_receiver->window[place] = pkt;
+      }
+    }
+  }
+}
 
 //receive message back from server
 pkt_t* receive_ack(int sock, struct sockaddr_in6  peer_addr){
@@ -30,103 +67,59 @@ pkt_t* receive_ack(int sock, struct sockaddr_in6  peer_addr){
         return NULL;
     }
     int status = pkt_decode(buf, 528, pkt);
+    if(status != PKT_OK){return NULL;}
     return pkt;
 }
 
-boolean process_pkt(pkt_t *pkt, w_buffer* buffer){
-  if (is_valid_seqnum(buffer->next_seqnum, buffer->widow_size, pkt_get_seqnum(pkt))) {
-    if (pkt_get_seqnum(pkt) == buffer->next_seqnum) {
-      int place = buffer->next_seqnum % buffer->widow_size;
-      int len = pkt_get_length(pkt);
-      memcpy(&buffer->buffer[i], pkt_get_payload(pkt), len);
-      buffer->len[i] = len;
-      while (buffer->len[i] != 0){
-        for (int j = 0; j < buffer->len[i]; i++) fprintf(stdout, "%c\n", buffer->buffer[i][j]);
-        buffer->len[i] = 0;
-        i = i+1 % buffer->widow_size;
-      }
-      buffer->next_seqnum = i;
-      return true;
-    }
-    else {
-      int place = pkt_get_seqnum(seqnum) % buffer->window_size;
-      if (buffer->len[place] != 0) return false;
-      else {
-        int len = pkt_get_length(pkt);
-        memcpy(&buffer->buffer[place], pkt_get_payload(pkt), len);
-        buffer->len[place] = len;
-      }
-    }
-  }
-}
 
-boolean is_valid_seqnum(int next_seqnum, int window_size, int seqnum){
-  if (next_seqnum + window_size > 256){
-    if (seqnum >= next_seqnum || next_seqnum + window_size - 256 > seqnum) return true;
-    else return false;
-  }
-  else{
-    if (seqnum >= next_seqnum && next_seqnum + window_size > seqnum) return true;
-    else return false;
-  }
-}
 
 //receive message from sender (client) and send message back (-> still don't know how to separe them)
-int receive_and_send_message(int sock, struct sockaddr_in6 cli_addr, boolean* loop, w_buffer* buffer){
+int receive_and_send_message(int sock, struct sockaddr_in6 cli_addr, window_receiver_t* window_receiver){
     char buffer[528];
     pkt_t* pkt = pkt_new();
     int len = sizeof(cli_addr);
     int n = recvfrom(sock, (char*) buffer, 528, 0, ( struct sockaddr *) &cli_addr, &len);
     if(n == -1){
         printf("server shutdown\n");
-        loop = false;
         return -1;
     }
+    /*if(seqnum == 3 || seqnum == 4){
+      seqnum++;
+      return 0;
+    }*/
     int decode_status = pkt_decode(buffer, 528, pkt);
     if(decode_status != PKT_OK){
+        packet_ignored_by_receiver++;
         return 0;
-    }
-    switch (pkt_get_type(pkt)){
-        case PTYPE_DATA:
-            data_received++;
-            break;
-        case PTYPE_ACK:
-            ack_received++;
-            break;
-        case PTYPE_NACK:
-            nack_received++;
-            break;
-        default:
-            break;
     }
     //printf("lastseq: %d, %d, %d\n", pkt_get_seqnum(pkt), seqnum_receiver-1, pkt_get_length(pkt));
     pkt_t* pkt_ack = pkt_new();
     //printf("tr: %d\n", pkt_get_length(pkt));
     if(pkt_get_tr(pkt) == 0){
-        if(pkt_get_type(pkt) == PTYPE_DATA && pkt_get_length(pkt) == 0 && pkt_get_seqnum(pkt) == buffer->next_seqnum-1){
-            printf("server shutdown\n");
-            loop = false;
-            return -1;
-        }
-        if (pkt_get_type(pkt) == PTYPE_DATA) process_pkt(pkt, buffer);
+      if(pkt_get_type(pkt) == PTYPE_DATA && pkt_get_length(pkt) == 0 && pkt_get_seqnum(pkt) == window_receiver->next_seqnum-1){
+          printf("server shutdown\n");
+          return -1;
+      }
+      
+      if (pkt_get_type(pkt) == PTYPE_DATA){
+        process_pkt(pkt, window_receiver);
         pkt_set_type(pkt_ack, PTYPE_ACK);
-        pkt_set_seqnum(pkt_ack, buffer->next_seqnum);
+        pkt_set_seqnum(pkt_ack, window_receiver->next_seqnum-1);
+
+        ack_sent++;
+        }else{
+            packet_ignored_by_receiver++;
+        }
     }else{
         pkt_set_type(pkt_ack, PTYPE_NACK);
         pkt_set_seqnum(pkt_ack, pkt_get_seqnum(pkt)%256);
+        nack_sent++;
         data_truncated_received++;
     }
-    seqnum_receiver++;
-    pkt_set_window(pkt_ack, buffer->window_size);
-    /*size_t* length = malloc(sizeof(int));
-    *length = 1024;
-    char* buf_ack = malloc(sizeof(char)*528);
-    int encode_status = pkt_encode(pkt_ack, buf_ack, length);
-    sendto(sock, (const char *)buf_ack, *length, 0, (const struct sockaddr *) &cli_addr, len);
-    free(length);
-    free(buf_ack);*/
+    
+    pkt_set_timestamp(pkt_ack, pkt_get_timestamp(pkt));
+    pkt_set_window(pkt_ack, (window_receiver->window_size)-1);
     send_message(sock, pkt_ack, cli_addr);
-    pkt_del(pkt);
     pkt_del(pkt_ack);
     return len;
 }
@@ -142,7 +135,7 @@ int send_message(int sock, pkt_t* pkt, struct sockaddr_in6 peer_addr){
         free(len);
         return -1;
     }
-    switch (pkt_get_type(pkt)){
+    /*switch (pkt_get_type(pkt)){
         case PTYPE_DATA:
             data_sent++;
             break;
@@ -154,7 +147,7 @@ int send_message(int sock, pkt_t* pkt, struct sockaddr_in6 peer_addr){
             break;
         default:
             break;
-    }
+    }*/
     sendto(sock, (const char*) buffer, *len, 0, (const struct sockaddr *) &peer_addr, sizeof(peer_addr));
     free(buffer);
     free(len);

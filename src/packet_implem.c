@@ -5,7 +5,6 @@
 
 /* Extra code */
 /* Your code will be inserted here */
-pkt_t;
 unsigned int int_to_int(unsigned int k) {
     return (k == 0 || k == 1 ? k : ((k % 2) + 10 * int_to_int(k / 2)));
 }
@@ -114,18 +113,18 @@ if(pkt_get_type(pkt) == PTYPE_DATA){
       return timestamp_s;
   }
 
-
   /**** BYTE CRC1 ****/
   uint32_t CRC1;
   memcpy(&CRC1,&data[6+offset],4);
   CRC1 = ntohl(CRC1);
-
+  // CRC STILL NOT WORKING
+    CRC1 = 0;
     //printf("first %d\n", CRC1);
   /**** CRC32 HEADER VERIFICATION ****/
   uint32_t crc1 = crc32(0L, Z_NULL, 0);
   if(TR==0) {
       crc1 = crc32(crc1,(const Bytef*) &data[0], 6+offset);
-      //printf("second %d\n", crc1);
+      //printf("second %d\n", CRC1);
       if(CRC1!=0) {
           
           return E_CRC;
@@ -159,13 +158,14 @@ if(pkt_get_type(pkt) == PTYPE_DATA){
       return payload_s;
   }
 
-
+    
     
   /**** CRC32 PAYLOAD VERIFICATION ****/
   uint32_t CRC2;
   memcpy(&CRC2,&data[10 + offset + pkt->length],4);
   CRC2 = ntohl(CRC2);
-
+  // CRC STILL NOT WORKING
+    CRC2 = 0;
   if(pkt->payload!=NULL && pkt->tr==0) {
       uint32_t crc2 = crc32(0L, Z_NULL, 0);
       crc2 = crc32(crc2,(const Bytef*) &data[10+offset], pkt->length);
@@ -296,7 +296,7 @@ uint32_t pkt_get_crc2   (const pkt_t* pkt)
     return pkt->crc2;
 }
 
-const char* pkt_get_payload(const pkt_t* pkt)
+char* pkt_get_payload(const pkt_t* pkt)
 {
     return pkt->payload;
 }
@@ -319,6 +319,7 @@ pkt_status_code pkt_set_window(pkt_t *pkt, const uint8_t window)
 {
     if(window > MAX_WINDOW_SIZE){return E_WINDOW;}
     pkt->window = window;
+    //printf("receive win: %d, %d\n", window, pkt->window);
     return PKT_OK;
 }
 

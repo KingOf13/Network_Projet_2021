@@ -3,25 +3,15 @@
 #include "create_socket.h"
 #include "packet_interface.h"
 #include "handle_message.h"
+#include "selective_repeat.h"
 
 extern int data_received;
 extern int data_truncated_received;
 extern int ack_sent;
 extern int nack_sent;
 extern int packet_duplicated;
+extern int packet_ignored_by_receiver;
 int seqnum = 0;
-
-w_buffer* init_window(){
-  w_buffer* receive_window = malloc(sizeof(w_buffer))
-  if (receive_window == NULL) return NULL;
-  while (receive_window->window_size < 32) {
-    receive_window->buffer[receive_window->window_size] = (char*) malloc(512*sizeof(char));
-    if (receive_window->buffer[receive_window->window_size] == NULL) break;
-    receive_window->len[receive_window->window_size] = 0;
-    receive_window->window_size += 1;
-  }
-  return receive_window;
-}
 
 int print_usage(char *prog_name) {
     ERROR("Usage:\n\t%s [-s stats_filename] listen_ip listen_port", prog_name);
@@ -76,7 +66,7 @@ int main(int argc, char **argv) {
     struct sockaddr_in6 peer_addr = create_address(listen_ip, listen_port);
     struct sockaddr_in6 cli_addr = create_client_address();
     struct timeval tv;
-    tv.tv_sec = 2;
+    tv.tv_sec = 0;
     tv.tv_usec = 0;
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
     bind_server(sock, peer_addr);
@@ -89,13 +79,14 @@ int main(int argc, char **argv) {
      * message handling
      * **********/
     //timeout to prevent recvfrom to block code
-    boolean loop = true;
-    w_buffer* buffer = init_window();
-
-    while (loop)
+    window_receiver_t* window_buffer = init_receiver_window();
+    
+    
+    while (1)
     {
-        int len = receive_and_send_message(sock, cli_addr, &loop, &buffer);
+        int len = receive_and_send_message(sock, cli_addr, window_buffer);
         seqnum++;
+        if(len == -1){break;}
     }
 
     close(sock);
@@ -108,7 +99,6 @@ int main(int argc, char **argv) {
     /*************
      * stats file handling
      * **********/
-    data_received--;
     if (stats_filename != NULL)
     {
         FILE* fp = fopen(stats_filename, "w+");
@@ -119,7 +109,7 @@ int main(int argc, char **argv) {
         fprintf(fp,"ack_received:%d\n", 0);
         fprintf(fp,"nack_sent:%d\n", nack_sent);
         fprintf(fp,"nack_received:%d\n", 0);
-        fprintf(fp,"packet_ignored:%d\n", 0);
+        fprintf(fp,"packet_ignored:%d\n", packet_ignored_by_receiver);
         fprintf(fp, "packet_duplicated:%d\n", packet_duplicated);
         fclose(fp);
     }
