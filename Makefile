@@ -45,6 +45,10 @@ mrproper:
 tests: all
 	./tests/run_tests.sh
 
+link :
+	cd link_simulator && make
+
+
 # By default, logs are disabled. But you can enable them with the debug target.
 debug: CFLAGS += -D_DEBUG
 debug: clean all

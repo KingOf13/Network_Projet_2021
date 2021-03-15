@@ -39,7 +39,7 @@ void pkt_del(pkt_t *pkt)
 
 pkt_status_code pkt_decode(const char *data, const size_t len, pkt_t *pkt)
 {
-    
+
   if(len==0 || data==NULL) {
       return E_UNCONSISTENT;
   }
@@ -161,7 +161,7 @@ pkt_status_code pkt_decode(const char *data, const size_t len, pkt_t *pkt)
   if(payload_s!=PKT_OK) {
       return payload_s;
   }
-    
+
 
 
   /**** CRC32 PAYLOAD VERIFICATION ****/
@@ -189,7 +189,7 @@ pkt_status_code pkt_decode(const char *data, const size_t len, pkt_t *pkt)
     fprintf(stderr, "crc1 %d\n", pkt_get_crc1(pkt));
     fprintf(stderr, "crc2 %d\n", pkt_get_crc2(pkt));
     fprintf(stderr, "HEY\n");*/
-    
+
   return PKT_OK;
 }
 
@@ -215,7 +215,7 @@ pkt_status_code pkt_encode(const pkt_t* pkt, char *buf, size_t* len)
     memcpy(&buf[place], &length, 2);
     place += 2;
   }
-    
+
   buf[place] = (char) pkt_get_seqnum(pkt);
   place ++;
 
