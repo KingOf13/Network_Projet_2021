@@ -47,9 +47,12 @@ pkt_status_code pkt_decode(const char *data, const size_t len, pkt_t *pkt)
   if(len<7) {
       return E_NOHEADER;
   }
-  if(len<11) {
+  if(len<10) {
       return E_UNCONSISTENT;
   }
+    if (pkt_get_type(pkt) == PTYPE_DATA && pkt_get_tr(pkt) == 1) {
+        return E_UNCONSISTENT;
+    }
   /**** PREMIER BYTE ****/
   uint8_t firstByte;
   memcpy(&firstByte,&data[0],1);
