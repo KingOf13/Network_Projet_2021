@@ -39,8 +39,8 @@ void pkt_del(pkt_t *pkt)
 
 pkt_status_code pkt_decode(const char *data, const size_t len, pkt_t *pkt)
 {
-
-  if(len==0) {
+    
+  if(len==0 || data==NULL) {
       return E_UNCONSISTENT;
   }
 
@@ -205,19 +205,18 @@ pkt_status_code pkt_encode(const pkt_t* pkt, char *buf, size_t* len)
 
   uint8_t type = (uint8_t) pkt_get_type(pkt) << 6;
   uint8_t TR = pkt_get_tr(pkt) << 5;
+  
   uint8_t window = pkt_get_window(pkt);
 
   buf[place] = type + TR + window;
-
   place ++;
 
   if (pkt_get_type(pkt) == PTYPE_DATA) {
     uint16_t length = htons(payload_length);
-    //printf("test len hihi %d\n", length);
     memcpy(&buf[place], &length, 2);
     place += 2;
   }
-
+    
   buf[place] = (char) pkt_get_seqnum(pkt);
   place ++;
 

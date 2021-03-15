@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
     struct sockaddr_in6 peer_addr = create_address(listen_ip, listen_port);
     struct sockaddr_in6 cli_addr = create_client_address();
     struct timeval tv;
-    tv.tv_sec = 0;
+    tv.tv_sec = 15;
     tv.tv_usec = 0;
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
     bind_server(sock, peer_addr);
@@ -90,6 +90,7 @@ int main(int argc, char **argv) {
     }
 
     close(sock);
+    free(window_buffer);
 
     /*************
      * end message handling
