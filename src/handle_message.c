@@ -86,7 +86,9 @@ int receive_and_send_message(int sock, struct sockaddr_in6 cli_addr, window_rece
         printf("server shutdown\n");
         return -1;
     }
-    /*if(seqnum % 2 == 0){
+    //test of missing ack
+    /*if(seqnum % 5 == 0){
+      
       return 0;
     }*/
     int decode_status = pkt_decode(buffer, 528, pkt);
@@ -94,11 +96,11 @@ int receive_and_send_message(int sock, struct sockaddr_in6 cli_addr, window_rece
         packet_ignored_by_receiver++;
         return 0;
     }
+    
     //printf("lastseq: %d, %d, %d\n", pkt_get_seqnum(pkt), window_receiver->next_seqnum-1, pkt_get_length(pkt));
     pkt_t* pkt_ack = pkt_new();
-    //printf("tr: %d\n", pkt_get_length(pkt));
+    //printf("tr: %d\n", pkt_get_tr(pkt));
     if(pkt_get_tr(pkt) == 0){
-      printf("HEY %d\n", pkt_get_seqnum(pkt));
       if(pkt_get_type(pkt) == PTYPE_DATA && pkt_get_length(pkt) == 0 && pkt_get_seqnum(pkt) == window_receiver->next_seqnum-1){
           printf("server shutdown\n");
           return -1;
@@ -114,7 +116,6 @@ int receive_and_send_message(int sock, struct sockaddr_in6 cli_addr, window_rece
             packet_ignored_by_receiver++;
         }
     }else{
-      
         pkt_set_type(pkt_ack, PTYPE_NACK);
         pkt_set_seqnum(pkt_ack, pkt_get_seqnum(pkt)%256);
         nack_sent++;
@@ -134,8 +135,9 @@ int send_message(int sock, pkt_t* pkt, struct sockaddr_in6 peer_addr){
     size_t* len = malloc(sizeof(int));
     *len = 1024;
     int status = pkt_encode(pkt, buffer, len);
+    
     if(status != PKT_OK){
-      
+        
         free(buffer);
         free(len);
         return -1;

@@ -61,8 +61,8 @@ int check_ack(window_sender_t* window, int index, int item_window_nb){
 
 int resend_nack(int index, window_sender_t* window, int sock, struct sockaddr_in6 peer_addr){
     printf("ind: %d\n", index);
-    window->start_time[index-1] = clock();
-    send_message(sock, window->window[index-1], peer_addr);
+    window->start_time[index] = clock();
+    send_message(sock, window->window[index], peer_addr);
     packet_retransmitted++;
 }
 

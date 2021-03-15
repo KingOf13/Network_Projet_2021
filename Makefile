@@ -45,6 +45,10 @@ mrproper:
 tests: all
 	./tests/run_tests.sh
 
+link :
+	cd link_simulator && make
+
+
 # By default, logs are disabled. But you can enable them with the debug target.
 debug: CFLAGS += -D_DEBUG
 debug: clean all
@@ -65,4 +69,4 @@ comp:
 	gcc src/receiver.c src/create_socket.c src/packet_implem.c src/selective_repeat.c src/handle_message.c -lz -o src/receiver
 
 run:
-	./src/receiver -s src/stats_receiver.csv :: 12345 2>log.txt | ./src/sender ::1 12345 -f src/test.txt -s src/stats_sender.csv
+	./src/receiver -s src/stats_receiver.csv :: 12345 2>>log.txt | ./src/sender ::1 12345 -f src/test.txt -s src/stats_sender.csv 2>>log.txt
