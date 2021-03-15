@@ -127,7 +127,7 @@ pkt_status_code pkt_decode(const char *data, const size_t len, pkt_t *pkt)
   uint32_t crc1 = crc32(0L, Z_NULL, 0);
   if(TR==0) {
       crc1 = crc32(crc1,(const Bytef*) &data[0], 6+offset);
-      //printf("second %d\n", CRC1);
+      //printf("second %d, %d\n", CRC1, crc1);
       if(CRC1!=crc1) {
 
           return E_CRC;
@@ -138,6 +138,7 @@ pkt_status_code pkt_decode(const char *data, const size_t len, pkt_t *pkt)
       memcpy(header,&data[0],6+offset);
       header[0] = header[0]&0b11011111;
       crc1 = crc32(crc1,(const Bytef*) header, 6+offset);
+      //printf("second %d, %d\n", CRC1, crc1);
       if(CRC1!=crc1) {
           return E_CRC;
       }
@@ -160,16 +161,14 @@ pkt_status_code pkt_decode(const char *data, const size_t len, pkt_t *pkt)
   if(payload_s!=PKT_OK) {
       return payload_s;
   }
-
+    
 
 
   /**** CRC32 PAYLOAD VERIFICATION ****/
   uint32_t CRC2;
   memcpy(&CRC2,&data[10 + offset + pkt->length],4);
   CRC2 = ntohl(CRC2);
-  // CRC STILL NOT WORKING
-  //CRC2 = 0;
-  if(pkt->payload!=NULL && pkt->tr==0) {
+  if(pkt_get_length(pkt) != 0 && pkt->tr==0) {
       uint32_t crc2 = crc32(0L, Z_NULL, 0);
       crc2 = crc32(crc2,(const Bytef*) &data[10+offset], pkt->length);
       if(CRC2!=crc2) {
@@ -180,7 +179,7 @@ pkt_status_code pkt_decode(const char *data, const size_t len, pkt_t *pkt)
           return CRC2_s;
       }
   }
-    fprintf(stderr, "DECODE\n");
+    /*fprintf(stderr, "DECODE\n");
     fprintf(stderr, "len %d\n", pkt_get_length(pkt));
     fprintf(stderr, "type %d\n", pkt_get_type(pkt));
     fprintf(stderr, "tr %d\n", pkt_get_tr(pkt));
@@ -189,7 +188,8 @@ pkt_status_code pkt_decode(const char *data, const size_t len, pkt_t *pkt)
     fprintf(stderr, "payload %s\n", pkt_get_payload(pkt));
     fprintf(stderr, "crc1 %d\n", pkt_get_crc1(pkt));
     fprintf(stderr, "crc2 %d\n", pkt_get_crc2(pkt));
-    fprintf(stderr, "HEY\n");
+    fprintf(stderr, "HEY\n");*/
+    
   return PKT_OK;
 }
 
@@ -205,9 +205,8 @@ pkt_status_code pkt_encode(const pkt_t* pkt, char *buf, size_t* len)
 
   uint8_t type = (uint8_t) pkt_get_type(pkt) << 6;
   uint8_t TR = pkt_get_tr(pkt) << 5;
-  
   uint8_t window = pkt_get_window(pkt);
-
+  if(pkt_get_tr(pkt) != 0){return E_TR;}
   buf[place] = type + TR + window;
   place ++;
 
@@ -233,7 +232,7 @@ pkt_status_code pkt_encode(const pkt_t* pkt, char *buf, size_t* len)
 
   uLong  CRC2;
 
-  if (pkt_get_type(pkt) == PTYPE_DATA) {
+  if (pkt_get_type(pkt) == PTYPE_DATA && pkt_get_payload(pkt) != NULL) {
     memcpy(&buf[place], pkt_get_payload(pkt), payload_length);
     CRC2 = crc32(0L, Z_NULL, 0);
     CRC2 = crc32(CRC2, (const unsigned char *) &buf[place], payload_length);
