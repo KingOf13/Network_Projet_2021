@@ -87,7 +87,7 @@ int receive_and_send_message(int sock, struct sockaddr_in6 cli_addr, window_rece
         return -1;
     }
     //test of missing ack
-    /*if(seqnum % 5 == 0){
+    /*if(seqnum == 4 || seqnum == 5){
       
       return 0;
     }*/
@@ -111,14 +111,14 @@ int receive_and_send_message(int sock, struct sockaddr_in6 cli_addr, window_rece
         pkt_set_type(pkt_ack, PTYPE_ACK);
         pkt_set_seqnum(pkt_ack, window_receiver->next_seqnum);
 
-        ack_sent++;
+        //ack_sent++;
         }else{
             packet_ignored_by_receiver++;
         }
     }else{
         pkt_set_type(pkt_ack, PTYPE_NACK);
         pkt_set_seqnum(pkt_ack, pkt_get_seqnum(pkt)%256);
-        nack_sent++;
+        //nack_sent++;
         data_truncated_received++;
     }
     
@@ -142,7 +142,7 @@ int send_message(int sock, pkt_t* pkt, struct sockaddr_in6 peer_addr){
         free(len);
         return -1;
     }
-    /*switch (pkt_get_type(pkt)){
+    switch (pkt_get_type(pkt)){
         case PTYPE_DATA:
             data_sent++;
             break;
@@ -154,7 +154,7 @@ int send_message(int sock, pkt_t* pkt, struct sockaddr_in6 peer_addr){
             break;
         default:
             break;
-    }*/
+    }
     sendto(sock, (const char*) buffer, *len, 0, (const struct sockaddr *) &peer_addr, sizeof(peer_addr));
     free(buffer);
     free(len);

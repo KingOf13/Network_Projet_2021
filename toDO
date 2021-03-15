@@ -7,6 +7,3 @@ packet duplicate ?? on augmente que dans le cas ou on recoit pas le next seqnum?
 data_sent du coup puisque pas "valide" c'est toutes les data envoyés ? meme ceux répétés?? pas bcp de sens normalement
 
 
-TR marche correctement ??
-seqnum renvoyé, = seqnum attendu ou seqnum reçu?? 
-

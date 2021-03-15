@@ -142,7 +142,6 @@ int main(int argc, char **argv) {
                 pkt_set_length(pkt, res);
                 pkt_set_payload(pkt, line, res);
             }
-            data_sent++;
             seqnum = (seqnum+1)%256;
             memset(line, 0, MAX_PAYLOAD_SIZE);
         }
@@ -176,6 +175,7 @@ int main(int argc, char **argv) {
     /*************
      * end file handling
      * **********/
+    data_sent--;
     for (size_t i = 0; i < 32; i++)
     {
        // printf("OUI\n");
