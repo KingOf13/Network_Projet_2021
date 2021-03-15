@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
     struct sockaddr_in6 peer_addr = create_address(listen_ip, listen_port);
     struct sockaddr_in6 cli_addr = create_client_address();
     struct timeval tv;
-    tv.tv_sec = 15;
+    tv.tv_sec = 4;
     tv.tv_usec = 0;
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
     bind_server(sock, peer_addr);
@@ -80,10 +80,11 @@ int main(int argc, char **argv) {
      * **********/
     //timeout to prevent recvfrom to block code
     window_receiver_t* window_buffer = init_receiver_window();
-    
-    
+
+
     while (1)
     {
+      fprintf(stderr, "WHILE RECEIVER LOOP\n");
         int len = receive_and_send_message(sock, cli_addr, window_buffer);
         seqnum++;
         if(len == -1){break;}
