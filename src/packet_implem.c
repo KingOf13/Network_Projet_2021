@@ -161,7 +161,7 @@ pkt_status_code pkt_decode(const char *data, const size_t len, pkt_t *pkt)
   if(payload_s!=PKT_OK) {
       return payload_s;
   }
-
+    
 
 
   /**** CRC32 PAYLOAD VERIFICATION ****/
@@ -189,7 +189,11 @@ pkt_status_code pkt_decode(const char *data, const size_t len, pkt_t *pkt)
     fprintf(stderr, "crc1 %d\n", pkt_get_crc1(pkt));
     fprintf(stderr, "crc2 %d\n", pkt_get_crc2(pkt));
     fprintf(stderr, "HEY\n");*/
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> ef68fa66c06d0a7d4a1a20992861bbcdec7945cb
   return PKT_OK;
 }
 
