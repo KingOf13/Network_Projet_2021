@@ -84,7 +84,6 @@ int main(int argc, char **argv) {
 
     while (1)
     {
-      fprintf(stderr, "WHILE RECEIVER LOOP\n");
         int len = receive_and_send_message(sock, cli_addr, window_buffer);
         seqnum++;
         if(len == -1){break;}
