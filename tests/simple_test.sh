@@ -14,7 +14,7 @@ if [ ! -z "$VALGRIND" ] ; then
 fi
 
 # On lance le receiver et capture sa sortie standard
-$valgrind ./receiver :: 12345  1>received_file 2> receiver.log &
+$valgrind .././receiver :: 12345  1>received_file 2> receiver.log &
 receiver_pid=$!
 
 cleanup()
@@ -25,7 +25,7 @@ cleanup()
 }
 trap cleanup SIGINT  # Kill les process en arrière plan en cas de ^-C
 # On démarre le transfert
-if ! $valgrind ./sender ::1 12345 < input_file 2> sender.log ; then
+if ! $valgrind .././sender ::1 12345 < test.txt 2> sender.log ; then
   echo "Crash du sender!"
   cat sender.log
   err=1  # On enregistre l'erreur
@@ -44,12 +44,11 @@ else  # On teste la valeur de retour du receiver
     err=1
   fi
 fi
-
 # On vérifie que le transfert s'est bien déroulé
-if [[ "$(md5sum input_file | awk '{print $1}')" != "$(md5sum received_file | awk '{print $1}')" ]]; then
+if [[ "$(md5sum test.txt | awk '{print $1}')" != "$(md5sum received_file | awk '{print $1}')" ]]; then
   echo "Le transfert a corrompu le fichier!"
   echo "Diff binaire des deux fichiers: (attendu vs produit)"
-  diff -C 9 <(od -Ax -t x1z input_file) <(od -Ax -t x1z received_file)
+  diff -C 9 <(od -Ax -t x1z test.txt) <(od -Ax -t x1z received_file)
   exit 1
 else
   echo "Le transfert est réussi!"

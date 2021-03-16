@@ -97,7 +97,7 @@ int receive_and_send_message(int sock, struct sockaddr_in6 cli_addr, window_rece
         return 0;
     }
     
-    printf("lastseq: %d, %d, %d\n", pkt_get_seqnum(pkt), window_receiver->next_seqnum-1, pkt_get_length(pkt));
+    //printf("lastseq: %d, %d, %d\n", pkt_get_seqnum(pkt), window_receiver->next_seqnum-1, pkt_get_length(pkt));
     pkt_t* pkt_ack = pkt_new();
     //printf("tr: %d\n", pkt_get_tr(pkt));
     if(pkt_get_tr(pkt) == 0){
