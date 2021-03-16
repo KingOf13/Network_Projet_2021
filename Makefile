@@ -43,7 +43,7 @@ mrproper:
 
 # It is likely that you will need to update this
 tests: all
-	./tests/run_tests.sh
+	cd tests && ./run_tests.sh
 
 link :
 	cd link_simulator && make
