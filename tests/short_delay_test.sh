@@ -1,10 +1,7 @@
 #!/bin/bash
 
 # cleanup d'un test précédent
-rm -f received_file input_file
-
-# Fichier au contenu aléatoire de 512 octets
-dd if=/dev/urandom of=input_file bs=1 count=512 &> /dev/null
+rm -f received_file
 
 # On lance le simulateur de lien avec 10% de pertes et un délais de 50ms
 #../link_sim -p 1341 -P 2456 -l 10 -d 50 -R  &> link.log &

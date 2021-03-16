@@ -24,7 +24,7 @@ cleanup()
 trap cleanup SIGINT  # Kill les process en arrière plan en cas de ^-C
 
 # On démarre le transfert
-if ! ../sender :: 1341 < test.txt 2> sender.log ; then
+if ! ../sender :: 1341 < input_file 2> sender.log ; then
   echo "Crash du sender!"
   cat sender.log
   err=1  # On enregistre l'erreur
@@ -48,10 +48,10 @@ fi
 kill -9 $link_pid &2> /dev/null
 
 # On vérifie que le transfert s'est bien déroulé
-if [[ "$(md5sum test.txt | awk '{print $1}')" != "$(md5sum received_file | awk '{print $1}')" ]]; then
+if [[ "$(md5sum input_file | awk '{print $1}')" != "$(md5sum received_file | awk '{print $1}')" ]]; then
   echo "Le transfert a corrompu le fichier!"
   echo "Diff binaire des deux fichiers: (attendu vs produit)"
-  diff -C 9 <(od -Ax -t x1z  test.txt) <(od -Ax -t x1z received_file)
+  diff -C 9 <(od -Ax -t x1z  input_file) <(od -Ax -t x1z received_file)
   exit 1
 else
   echo "Le transfert est réussi!"

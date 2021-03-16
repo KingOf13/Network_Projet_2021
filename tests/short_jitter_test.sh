@@ -3,15 +3,13 @@
 # cleanup d'un test précédent
 rm -f received_file
 
-# Fichier au contenu aléatoire de 512 octets
-
 # On lance le simulateur de lien avec 10% de pertes et un délais de 50ms
 #../link_sim -p 1341 -P 2456 -l 10 -d 50 -R  &> link.log &
-../link_sim -p 1341 -P 2456 -l 10 -R &> link.log &
+../link_sim -p 1341 -P 2456 -d 50 -j 20 -R &> link.log &
 link_pid=$!
 
 # On lance le receiver et capture sa sortie standard
-../receiver :: 2456 1> received_file 2> receiver.log&
+../receiver :: 2456 1>received_file 2> receiver.log&
 receiver_pid=$!
 
 cleanup()
@@ -30,7 +28,7 @@ if ! ../sender :: 1341 < test.txt 2> sender.log ; then
   err=1  # On enregistre l'erreur
 fi
 
-sleep 200 # On attend 5 seconde que le receiver finisse
+sleep 30 # On attend 5 seconde que le receiver finisse
 
 if kill -0 $receiver_pid &> /dev/null ; then
   echo "Le receiver ne s'est pas arreté à la fin du transfert!"

@@ -3,10 +3,24 @@
 ./simple_test.sh
 { echo "A very simple test, with short delay"; } 2> /dev/null
 ./short_delay_test.sh
+{ echo "A very simple test, with short jitter"; } 2> /dev/null
+./short_jitter_test.sh
 { echo "A very simple test, with small loss"; } 2> /dev/null
 ./small_loss_test.sh
 { echo "A very simple test, with short delay and small loss"; } 2> /dev/null
-./short_delay_test.sh
+./short_delay_small_loss_test.sh
+{ echo "A very simple test with binary file"; } 2> /dev/null
+./simple_binary_test.sh
+{ echo "A very simple test with binary file, with short delay"; } 2> /dev/null
+./short_delay_binary_test.sh
+{ echo "A very simple test with binary file, with short jitter"; } 2> /dev/null
+./short_jitter_binary_test.sh
+{ echo "A very simple test with binary file, with small loss"; } 2> /dev/null
+./small_loss_binary_test.sh
+{ echo "A very simple test with binary file, with short delay and small loss"; } 2> /dev/null
+./short_delay_small_loss_binary_test.sh
+#{ echo "A very simple image test, with short delay and small loss"; } 2> /dev/null
+#./transfert_images_test.sh
 # Run the same test, but this time with valgrind
 # { echo "A very simple test, with Valgrind"; } 2> /dev/null
 #VALGRIND=1 ./simple_test.sh

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # cleanup d'un test précédent
-rm -f received_file input_file
+rm -f received_file
 
 # Fichier au contenu aléatoire de 512 octets
 dd if=/dev/urandom of=input_file bs=1 count=512 &> /dev/null
