@@ -25,7 +25,7 @@ RECEIVER = receiver
 all: $(SENDER) $(RECEIVER)
 
 $(SENDER): $(SENDER_OBJECTS)
-	$(CC) $(SENDER_OBJECTS) $(CFILE) $(LDFLAGS) -o $@ 
+	$(CC) $(SENDER_OBJECTS) $(CFILE) $(LDFLAGS) -o $@
 
 $(RECEIVER): $(RECEIVER_OBJECTS)
 	$(CC) $(RECEIVER_OBJECTS) $(CFILE) $(LDFLAGS) -o $@
@@ -36,19 +36,18 @@ $(RECEIVER): $(RECEIVER_OBJECTS)
 .PHONY: clean mrproper
 
 clean:
-	rm -f $(SENDER_OBJECTS) $(RECEIVER_OBJECTS)
-	rm -f $(SENDER).log $(RECEIVER).log
+	@rm -f $(SENDER_OBJECTS) $(RECEIVER_OBJECTS)
+	@rm -f $(SENDER).log $(RECEIVER).log
 
 mrproper:
-	rm -f $(SENDER) $(RECEIVER)
+	@rm -f $(SENDER) $(RECEIVER)
 
 # It is likely that you will need to update this
 tests: all
-	cd tests && ./run_tests.sh
+	@cd tests && ./run_tests.sh
 
 link :
-	cd link_simulator && make
-
+	@cd link_simulator && make
 
 # By default, logs are disabled. But you can enable them with the debug target.
 debug: CFLAGS += -D_DEBUG
@@ -60,14 +59,14 @@ ZIP_NAME="../projet1_Mounzer_Aigret.zip"
 # A zip target, to help you have a proper zip file. You probably need to adapt this code.
 zip:
 	# Generate the log file stat now. Try to keep the repository clean.
-	git log --stat > gitlog.stat
-	zip -r $(ZIP_NAME) Makefile src tests rapport.pdf gitlog.stat
+	@git log --stat > gitlog.stat
+	@zip -r $(ZIP_NAME) Makefile src tests rapport.pdf gitlog.stat
 	# We remove it now, but you can leave it if you want.
-	rm gitlog.stat
+	@rm gitlog.stat
 
 comp:
-	gcc src/sender.c src/create_socket.c src/packet_implem.c src/selective_repeat.c src/handle_message.c -lz -o src/sender
-	gcc src/receiver.c src/create_socket.c src/packet_implem.c src/selective_repeat.c src/handle_message.c -lz -o src/receiver
+	@gcc src/sender.c src/create_socket.c src/packet_implem.c src/selective_repeat.c src/handle_message.c -lz -o src/sender
+	@gcc src/receiver.c src/create_socket.c src/packet_implem.c src/selective_repeat.c src/handle_message.c -lz -o src/receiver
 
 run:
-	./src/receiver -s src/stats_receiver.csv :: 12345 2>log_rec.txt & ./src/sender ::1 12345 -f src/test.txt -s src/stats_sender.csv 2>log_sen.txt
+	@./src/receiver -s src/stats_receiver.csv :: 12345 2>log_rec.txt & ./src/sender ::1 12345 -f src/test.txt -s src/stats_sender.csv 2>log_sen.txt

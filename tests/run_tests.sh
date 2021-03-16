@@ -1,6 +1,12 @@
 # Note that this assumes to be called from the Makefile, you may want to adapt it.
-# { echo "A very simple test"; } 2> /dev/null
+{ echo "A very simple test"; } 2> /dev/null
 ./simple_test.sh
+{ echo "A very simple test, with short delay"; } 2> /dev/null
+./short_delay_test.sh
+{ echo "A very simple test, with small loss"; } 2> /dev/null
+./small_loss_test.sh
+{ echo "A very simple test, with short delay and small loss"; } 2> /dev/null
+./short_delay_test.sh
 # Run the same test, but this time with valgrind
 # { echo "A very simple test, with Valgrind"; } 2> /dev/null
 #VALGRIND=1 ./simple_test.sh
