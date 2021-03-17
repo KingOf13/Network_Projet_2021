@@ -3,6 +3,7 @@
 #include "packet_interface.h"
 #include "selective_repeat.h"
 #include "handle_message.h"
+#include <getopt.h>
 
 int item_window_nb = 0;
 int seqnum = 0;

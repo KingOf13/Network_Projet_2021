@@ -4,6 +4,7 @@
 #include "packet_interface.h"
 #include "handle_message.h"
 #include "selective_repeat.h"
+#include <getopt.h>
 
 extern int data_received;
 extern int data_truncated_received;
@@ -114,7 +115,7 @@ int main(int argc, char **argv) {
     fprintf(fstats,"nack_received:%d\n", 0);
     fprintf(fstats,"packet_ignored:%d\n", packet_ignored_by_receiver);
     fprintf(fstats, "packet_duplicated:%d\n", packet_duplicated);
-    
+
     if (stats_filename != NULL)
     {
         fclose(fstats);
