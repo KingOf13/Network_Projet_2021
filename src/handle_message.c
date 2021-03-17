@@ -87,10 +87,10 @@ int receive_and_send_message(int sock, struct sockaddr_in6 cli_addr, window_rece
         return -1;
     }
     //test of missing ack
-    /*if(seqnum == 4 || seqnum == 5){
+    if(seqnum == 4 || seqnum == 5 || seqnum == 1 || seqnum == 6){
       
       return 0;
-    }*/
+    }
     int decode_status = pkt_decode(buffer, 528, pkt);
     if(decode_status != PKT_OK){
         packet_ignored_by_receiver++;

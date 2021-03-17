@@ -104,20 +104,18 @@ int main(int argc, char **argv) {
     if (stats_filename != NULL)
     {
         fstats = fopen(stats_filename, "w+");
-    }
-    fprintf(fstats,"data_sent:%d\n", 0);
-    fprintf(fstats,"data_received:%d\n", data_received);
-    fprintf(fstats,"data_truncated_received:%d\n", data_truncated_received);
-    fprintf(fstats,"ack_sent:%d\n", ack_sent);
-    fprintf(fstats,"ack_received:%d\n", 0);
-    fprintf(fstats,"nack_sent:%d\n", nack_sent);
-    fprintf(fstats,"nack_received:%d\n", 0);
-    fprintf(fstats,"packet_ignored:%d\n", packet_ignored_by_receiver);
-    fprintf(fstats, "packet_duplicated:%d\n", packet_duplicated);
-    if (stats_filename != NULL)
-    {
+        fprintf(fstats,"data_sent:%d\n", 0);
+        fprintf(fstats,"data_received:%d\n", data_received);
+        fprintf(fstats,"data_truncated_received:%d\n", data_truncated_received);
+        fprintf(fstats,"ack_sent:%d\n", ack_sent);
+        fprintf(fstats,"ack_received:%d\n", 0);
+        fprintf(fstats,"nack_sent:%d\n", nack_sent);
+        fprintf(fstats,"nack_received:%d\n", 0);
+        fprintf(fstats,"packet_ignored:%d\n", packet_ignored_by_receiver);
+        fprintf(fstats, "packet_duplicated:%d\n", packet_duplicated);
         fclose(fstats);
     }
+
 
 
 
