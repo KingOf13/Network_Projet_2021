@@ -25,10 +25,10 @@ RECEIVER = receiver
 all: $(SENDER) $(RECEIVER)
 
 $(SENDER): $(SENDER_OBJECTS)
-	$(CC) $(SENDER_OBJECTS) $(CFILE) $(LDFLAGS) -o $@
+	$(CC) -std=c99 $(SENDER_OBJECTS) $(CFILE) $(LDFLAGS) -o $@
 
 $(RECEIVER): $(RECEIVER_OBJECTS)
-	$(CC) $(RECEIVER_OBJECTS) $(CFILE) $(LDFLAGS) -o $@
+	$(CC) -std=c99 $(RECEIVER_OBJECTS) $(CFILE) $(LDFLAGS) -o $@
 
 %.o: %.c
 	$(CC) $(CFLAGS) $< $(LDFLAGS) -o $@
