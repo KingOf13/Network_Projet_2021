@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
     /*************
      * end given argument handling part
      * **********/
-
+    
 
     /*************
      * socket creation and connection
@@ -74,12 +74,12 @@ int main(int argc, char **argv) {
     if(sock == -1){return -1;}
 
     //connect not necessary in UDP (normally)
-
+    
     /*int connect = connect_to_server(sock, peer_addr);
     if(connect == -1){return -1;}*/
 
     /*************
-     * end socket creation
+     * end socket creation 
      * **********/
 
     /*************
@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
     pollfd[0].fd = sock;
     pollfd[0].events = POLLIN;
     pollfd[0].revents = 0;
-
+    
 
     //if no file is given, read the stdin input and send it as message to server (receiver)
     char* line = malloc(sizeof(char)*512);
@@ -109,39 +109,38 @@ int main(int argc, char **argv) {
         pollfd[1].events = POLLIN;
         pollfd[1].revents = 0;
     }else{
-        fp = fopen(filename, "rb");
+        fp = fopen(filename, "r");
         if (fp == NULL){return -1;}
         pollfd[1].fd = fileno(fp);
         pollfd[1].events = POLLIN;
         pollfd[1].revents = 0;
     }
-
-    int res = 1;
+    
+    int res = MAX_PAYLOAD_SIZE;
     while(1){
         int sock_poll_res = poll(pollfd, 2, 1000);
         if(sock_poll_res < 0){
             printf("error with poll\n");
         }
         //printf("%d, %d, %d\n", seqnum, window->last_ack, window_val);
-        if(pollfd[1].revents & POLLIN && res == 1 && seqnum < window->last_ack+window_val){
-            res = fread(line, 512, 1, fp);
+        if(pollfd[1].revents & POLLIN && res == MAX_PAYLOAD_SIZE && seqnum < window->last_ack+window_val){
+            res = fread(line, 1, MAX_PAYLOAD_SIZE, fp);
             pkt_t* pkt = pkt_new();
             pkt_set_type(pkt, PTYPE_DATA);
             pkt_set_tr(pkt, 0);
-            pkt_set_payload(pkt, line, MAX_PAYLOAD_SIZE);
-            //printf("%d, %d, %s", res, seqnum, pkt_get_payload(pkt));
+            pkt_set_payload(pkt, line, res);
             pkt_set_window(pkt, window_val);
             pkt_set_timestamp(pkt, 0);
             pkt_set_seqnum(pkt, seqnum);
-            pkt_set_length(pkt, MAX_PAYLOAD_SIZE);
+            pkt_set_length(pkt, res);
             window->window[seqnum%MAX_WINDOW_SIZE] = pkt;
             item_window_nb++;
             //printf("send: %d\n", seqnum);
             window->start_time[seqnum%MAX_WINDOW_SIZE] = clock();
             while(send_message(sock, pkt, peer_addr) == -1){
                 ERROR("Error while encoding packet %d\n", seqnum);
-                pkt_set_length(pkt, MAX_PAYLOAD_SIZE);
-                pkt_set_payload(pkt, line, MAX_PAYLOAD_SIZE);
+                pkt_set_length(pkt, res);
+                pkt_set_payload(pkt, line, res);
             }
             seqnum = (seqnum+1)%256;
             memset(line, 0, MAX_PAYLOAD_SIZE);
@@ -163,7 +162,7 @@ int main(int argc, char **argv) {
             pkt_del(pkt_ack);
         }
         check_timer(window, sock, peer_addr);
-        if(res != 1 && item_window_nb <= 0){break;}
+        if(res != MAX_PAYLOAD_SIZE && item_window_nb <= 0){break;}
     }
     //printf("last: %d, %d\n", seqnum, window->last_ack);
     if(filename != NULL){fclose(fp);}
@@ -191,24 +190,24 @@ int main(int argc, char **argv) {
     /*************
      * stats file handling
      * **********/
-    FILE* fstats = stderr;
+
     if (stats_filename != NULL)
     {
-        fstats = fopen(stats_filename, "w+");
-        fprintf(fstats,"data_sent:%d\n", data_sent);
-    fprintf(fstats,"data_received:%d\n", 0);
-    fprintf(fstats,"data_truncated_received:%d\n", 0);
-    fprintf(fstats,"ack_sent:%d\n", 0);
-    fprintf(fstats,"ack_received:%d\n", ack_received);
-    fprintf(fstats,"nack_sent:%d\n", 0);
-    fprintf(fstats,"nack_received:%d\n", nack_received);
-    fprintf(fstats,"packet_ignored:%d\n", packet_ignored_by_sender);
-    fprintf(fstats,"min_rtt:%ld\n", min_rtt/1000);
-    fprintf(fstats,"max_rtt:%ld\n", max_rtt/1000);
-    fprintf(fstats,"packets_retransmitted:%d\n", packet_retransmitted);
-    fclose(fstats);
+        FILE* fp = fopen(stats_filename, "w+");
+        fprintf(fp,"data_sent:%d\n", data_sent);
+        fprintf(fp,"data_received:%d\n", 0);
+        fprintf(fp,"data_truncated_received:%d\n", 0);
+        fprintf(fp,"ack_sent:%d\n", 0);
+        fprintf(fp,"ack_received:%d\n", ack_received);
+        fprintf(fp,"nack_sent:%d\n", 0);
+        fprintf(fp,"nack_received:%d\n", nack_received);
+        fprintf(fp,"packet_ignored:%d\n", packet_ignored_by_sender);
+        fprintf(fp,"min_rtt:%ld\n", min_rtt/1000);
+        fprintf(fp,"max_rtt:%ld\n", max_rtt/1000);
+        fprintf(fp,"packets_retransmitted:%d\n", packet_retransmitted);
+        fclose(fp);
     }
-
+    
 
     /*************
      * end stats file handling

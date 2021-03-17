@@ -5,6 +5,9 @@
 
 /* Extra code */
 /* Your code will be inserted here */
+unsigned int int_to_int(unsigned int k) {
+    return (k == 0 || k == 1 ? k : ((k % 2) + 10 * int_to_int(k / 2)));
+}
 
 pkt_t* pkt_new()
 {
@@ -18,9 +21,8 @@ pkt_t* pkt_new()
     new->seqnum = 0;
     new->timestamp = 0;
     new->crc1 = 0;
-    new->payload = malloc(sizeof(char)*MAX_PAYLOAD_SIZE);
-    if(new->payload == NULL){return NULL;}
     new->payload = NULL;
+
     return new;
 }
 

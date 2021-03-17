@@ -22,7 +22,7 @@ window_receiver_t* init_receiver_window(){
   receive_window->next_seqnum = 0;
   receive_window->window_val = MAX_WINDOW_SIZE;
   receive_window->window_size = MAX_WINDOW_SIZE;
-  for(int i=0; i<MAX_WINDOW_SIZE; i++) {
+  for(int i=0; i<31; i++) {
     receive_window->window[i] = NULL;
   }
   return receive_window;

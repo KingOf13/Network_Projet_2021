@@ -7,7 +7,7 @@ CFLAGS += -c -std=gnu99 -Wall -Werror -Wextra -O2
 CFLAGS += -D_COLOR
 
 # You may want to add something here
-LDFLAGS += -lz
+LDFLAGS = -lz
 
 #supp CFILE
 CFILE += src/create_socket.c src/selective_repeat.c src/handle_message.c src/packet_implem.c

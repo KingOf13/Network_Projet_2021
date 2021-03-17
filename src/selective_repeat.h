@@ -13,8 +13,8 @@
 #include "handle_message.h"
 
 typedef struct window_sender{
-    pkt_t* window[MAX_WINDOW_SIZE];
-    time_t start_time[MAX_WINDOW_SIZE];
+    pkt_t* window[32];
+    time_t start_time[32];
     int last_ack;
 }window_sender_t;
 
