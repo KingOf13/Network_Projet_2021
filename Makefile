@@ -57,8 +57,9 @@ debug: clean all
 ZIP_NAME="../projet1_Mounzer_Aigret.zip"
 
 # A zip target, to help you have a proper zip file. You probably need to adapt this code.
-zip:
+zip: clean
 	# Generate the log file stat now. Try to keep the repository clean.
+	@rm $(ZIP_NAME)
 	@git log --stat > gitlog.stat
 	@zip -r $(ZIP_NAME) Makefile src tests rapport.pdf gitlog.stat
 	# We remove it now, but you can leave it if you want.
