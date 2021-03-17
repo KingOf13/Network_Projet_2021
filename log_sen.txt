@@ -1,0 +1,2 @@
+[ERROR] Sender has following arguments: filename is src/test.txt, stats_filename is src/stats_sender.csv, receiver_ip is ::1, receiver_port is 12345
+[ERROR] This is not an error, now let's code!

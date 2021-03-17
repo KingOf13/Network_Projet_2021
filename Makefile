@@ -25,10 +25,10 @@ RECEIVER = receiver
 all: $(SENDER) $(RECEIVER)
 
 $(SENDER): $(SENDER_OBJECTS)
-	$(CC) $(SENDER_OBJECTS) $(CFILE) $(LDFLAGS) -o $@
+	$(CC) -std=c99 $(SENDER_OBJECTS) $(CFILE) $(LDFLAGS) -o $@
 
 $(RECEIVER): $(RECEIVER_OBJECTS)
-	$(CC) $(RECEIVER_OBJECTS) $(CFILE) $(LDFLAGS) -o $@
+	$(CC) -std=c99 $(RECEIVER_OBJECTS) $(CFILE) $(LDFLAGS) -o $@
 
 %.o: %.c
 	$(CC) $(CFLAGS) $< $(LDFLAGS) -o $@
@@ -69,4 +69,4 @@ comp:
 	@gcc src/receiver.c src/create_socket.c src/packet_implem.c src/selective_repeat.c src/handle_message.c -lz -o src/receiver
 
 run:
-	@./src/receiver -s src/stats_receiver.csv :: 12345 2>log_rec.txt & ./src/sender ::1 12345 -f src/test.txt -s src/stats_sender.csv 2>log_sen.txt
+	@./src/receiver -s src/stats_receiver.csv :: 12345 1>src/receive_file 2>log_rec.txt & ./src/sender ::1 12345 -f src/test.txt -s src/stats_sender.csv 1>src/sender_file 2>log_sen.txt
