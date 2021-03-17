@@ -53,5 +53,3 @@ dkms.conf
 *sender
 *receiver
 *.log
-tests/input_file
-tests/received_file
