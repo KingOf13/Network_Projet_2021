@@ -7,7 +7,11 @@ CFLAGS += -c -std=gnu99 -Wall -Werror -Wextra -O2
 CFLAGS += -D_COLOR
 
 # You may want to add something here
+<<<<<<< HEAD
 LDFLAGS += -lz -std=c99
+=======
+LDFLAGS = -lz
+>>>>>>> c8cb6ca70274b567367f04e05783f0aa7838e24f
 
 #supp CFILE
 CFILE += src/create_socket.c src/selective_repeat.c src/handle_message.c src/packet_implem.c
@@ -25,10 +29,10 @@ RECEIVER = receiver
 all: $(SENDER) $(RECEIVER)
 
 $(SENDER): $(SENDER_OBJECTS)
-	$(CC) $(SENDER_OBJECTS) $(CFILE) $(LDFLAGS) -o $@
+	$(CC) -std=c99 $(SENDER_OBJECTS) $(CFILE) $(LDFLAGS) -o $@
 
 $(RECEIVER): $(RECEIVER_OBJECTS)
-	$(CC) $(RECEIVER_OBJECTS) $(CFILE) $(LDFLAGS) -o $@
+	$(CC) -std=c99 $(RECEIVER_OBJECTS) $(CFILE) $(LDFLAGS) -o $@
 
 %.o: %.c
 	$(CC) $(CFLAGS) $< $(LDFLAGS) -o $@

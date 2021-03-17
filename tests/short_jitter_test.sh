@@ -28,7 +28,12 @@ if ! ../sender :: 1341 < test.txt 2> sender.log ; then
   err=1  # On enregistre l'erreur
 fi
 
+<<<<<<< HEAD
 sleep 30 # On attend 30 seconde que le receiver finisse
+=======
+echo "sleep ..."
+sleep 10 # On attend 30 seconde que le receiver finisse
+>>>>>>> c8cb6ca70274b567367f04e05783f0aa7838e24f
 
 if kill -0 $receiver_pid &> /dev/null ; then
   echo "Le receiver ne s'est pas arreté à la fin du transfert!"

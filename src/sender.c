@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
     /*************
      * end given argument handling part
      * **********/
-
+    
 
     /*************
      * socket creation and connection
@@ -74,12 +74,12 @@ int main(int argc, char **argv) {
     if(sock == -1){return -1;}
 
     //connect not necessary in UDP (normally)
-
+    
     /*int connect = connect_to_server(sock, peer_addr);
     if(connect == -1){return -1;}*/
 
     /*************
-     * end socket creation
+     * end socket creation 
      * **********/
 
     /*************
@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
     pollfd[0].fd = sock;
     pollfd[0].events = POLLIN;
     pollfd[0].revents = 0;
-
+    
 
     //if no file is given, read the stdin input and send it as message to server (receiver)
     char* line = malloc(sizeof(char)*512);
@@ -115,8 +115,13 @@ int main(int argc, char **argv) {
         pollfd[1].events = POLLIN;
         pollfd[1].revents = 0;
     }
+<<<<<<< HEAD
 
     int res = 1;
+=======
+    
+    int res = MAX_PAYLOAD_SIZE;
+>>>>>>> c8cb6ca70274b567367f04e05783f0aa7838e24f
     while(1){
         int sock_poll_res = poll(pollfd, 2, 1000);
         if(sock_poll_res < 0){
@@ -191,6 +196,7 @@ int main(int argc, char **argv) {
     /*************
      * stats file handling
      * **********/
+<<<<<<< HEAD
     FILE* fstats = stderr;
     if (stats_filename != NULL)
     {
@@ -207,8 +213,26 @@ int main(int argc, char **argv) {
     fprintf(fstats,"max_rtt:%ld\n", max_rtt/1000);
     fprintf(fstats,"packets_retransmitted:%d\n", packet_retransmitted);
     fclose(fstats);
-    }
+=======
 
+    if (stats_filename != NULL)
+    {
+        FILE* fp = fopen(stats_filename, "w+");
+        fprintf(fp,"data_sent:%d\n", data_sent);
+        fprintf(fp,"data_received:%d\n", 0);
+        fprintf(fp,"data_truncated_received:%d\n", 0);
+        fprintf(fp,"ack_sent:%d\n", 0);
+        fprintf(fp,"ack_received:%d\n", ack_received);
+        fprintf(fp,"nack_sent:%d\n", 0);
+        fprintf(fp,"nack_received:%d\n", nack_received);
+        fprintf(fp,"packet_ignored:%d\n", packet_ignored_by_sender);
+        fprintf(fp,"min_rtt:%ld\n", min_rtt/1000);
+        fprintf(fp,"max_rtt:%ld\n", max_rtt/1000);
+        fprintf(fp,"packets_retransmitted:%d\n", packet_retransmitted);
+        fclose(fp);
+>>>>>>> c8cb6ca70274b567367f04e05783f0aa7838e24f
+    }
+    
 
     /*************
      * end stats file handling

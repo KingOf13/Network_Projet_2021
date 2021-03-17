@@ -36,7 +36,7 @@ bool process_pkt(pkt_t *pkt, window_receiver_t* window_receiver){
       while (window_receiver->window[place] != NULL){
         //printf("i: %d\n", place);
         pkt_t* win_pack = window_receiver->window[place];
-        fprintf(stdout, "%s", pkt_get_payload(win_pack));
+        printf("%s", pkt_get_payload(win_pack));
         pkt_del(win_pack);
         window_receiver->window[place] = NULL;
         window_receiver->window_val++;

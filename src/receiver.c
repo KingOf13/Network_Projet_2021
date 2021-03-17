@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
     struct sockaddr_in6 peer_addr = create_address(listen_ip, listen_port);
     struct sockaddr_in6 cli_addr = create_client_address();
     struct timeval tv;
-    tv.tv_sec = 10;
+    tv.tv_sec = 15;
     tv.tv_usec = 0;
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
     bind_server(sock, peer_addr);
@@ -80,8 +80,8 @@ int main(int argc, char **argv) {
      * **********/
     //timeout to prevent recvfrom to block code
     window_receiver_t* window_buffer = init_receiver_window();
-
-
+    
+    
     while (1)
     {
         int len = receive_and_send_message(sock, cli_addr, window_buffer);
@@ -100,6 +100,7 @@ int main(int argc, char **argv) {
     /*************
      * stats file handling
      * **********/
+<<<<<<< HEAD
     FILE* fstats = stderr;
     if (stats_filename != NULL)
     {
@@ -119,6 +120,24 @@ int main(int argc, char **argv) {
 
 
 
+=======
+    if (stats_filename != NULL)
+    {
+        FILE* fp = fopen(stats_filename, "w+");
+        fprintf(fp,"data_sent:%d\n", 0);
+        fprintf(fp,"data_received:%d\n", data_received);
+        fprintf(fp,"data_truncated_received:%d\n", data_truncated_received);
+        fprintf(fp,"ack_sent:%d\n", ack_sent);
+        fprintf(fp,"ack_received:%d\n", 0);
+        fprintf(fp,"nack_sent:%d\n", nack_sent);
+        fprintf(fp,"nack_received:%d\n", 0);
+        fprintf(fp,"packet_ignored:%d\n", packet_ignored_by_receiver);
+        fprintf(fp, "packet_duplicated:%d\n", packet_duplicated);
+        fclose(fp);
+    }
+
+
+>>>>>>> c8cb6ca70274b567367f04e05783f0aa7838e24f
     /*************
      * end stats file handling
      * **********/
