@@ -6,6 +6,6 @@ ack_received:93
 nack_sent:0
 nack_received:0
 packet_ignored:0
-min_rtt:1
-max_rtt:5
+min_rtt:0
+max_rtt:0
 packets_retransmitted:0
