@@ -3,6 +3,8 @@
 int packet_retransmitted = 0;
 time_t min_rtt = 100000000;
 time_t max_rtt = 0;
+time_t last_rtt[15];
+int count_rtt;
 
 
 window_sender_t* window_sender_init(){
@@ -33,6 +35,17 @@ int set_min_max_rtt(time_t new_time){
     max_rtt = (new_time > max_rtt) ? new_time : max_rtt;
 }
 
+time_t get_rtt_mean(){
+    if(count_rtt < 15){return -1;}
+    time_t sum = 0;
+    for (size_t i = 0; i < 15; i++)
+    {
+        sum += last_rtt[i];
+    }
+    return sum/15;
+    
+}
+
 int check_ack(window_sender_t* window, int index, int item_window_nb){
     window->last_ack = index;
     while (1)
@@ -60,7 +73,7 @@ int check_ack(window_sender_t* window, int index, int item_window_nb){
 }
 
 int resend_nack(int index, window_sender_t* window, int sock, struct sockaddr_in6 peer_addr){
-    printf("ind: %d\n", index);
+    //printf("ind: %d\n", index);
     window->start_time[index] = clock();
     send_message(sock, window->window[index], peer_addr);
     packet_retransmitted++;
