@@ -4,6 +4,7 @@
 #include "packet_interface.h"
 #include "handle_message.h"
 #include "selective_repeat.h"
+#include <getopt.h>
 
 extern int data_received;
 extern int data_truncated_received;
@@ -66,7 +67,7 @@ int main(int argc, char **argv) {
     struct sockaddr_in6 peer_addr = create_address(listen_ip, listen_port);
     struct sockaddr_in6 cli_addr = create_client_address();
     struct timeval tv;
-    tv.tv_sec = 10;
+    tv.tv_sec = 15;
     tv.tv_usec = 0;
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
     bind_server(sock, peer_addr);
@@ -104,15 +105,19 @@ int main(int argc, char **argv) {
     if (stats_filename != NULL)
     {
         fstats = fopen(stats_filename, "w+");
-        fprintf(fstats,"data_sent:%d\n", 0);
-        fprintf(fstats,"data_received:%d\n", data_received);
-        fprintf(fstats,"data_truncated_received:%d\n", data_truncated_received);
-        fprintf(fstats,"ack_sent:%d\n", ack_sent);
-        fprintf(fstats,"ack_received:%d\n", 0);
-        fprintf(fstats,"nack_sent:%d\n", nack_sent);
-        fprintf(fstats,"nack_received:%d\n", 0);
-        fprintf(fstats,"packet_ignored:%d\n", packet_ignored_by_receiver);
-        fprintf(fstats, "packet_duplicated:%d\n", packet_duplicated);
+    }
+    fprintf(fstats,"data_sent:%d\n", 0);
+    fprintf(fstats,"data_received:%d\n", data_received);
+    fprintf(fstats,"data_truncated_received:%d\n", data_truncated_received);
+    fprintf(fstats,"ack_sent:%d\n", ack_sent);
+    fprintf(fstats,"ack_received:%d\n", 0);
+    fprintf(fstats,"nack_sent:%d\n", nack_sent);
+    fprintf(fstats,"nack_received:%d\n", 0);
+    fprintf(fstats,"packet_ignored:%d\n", packet_ignored_by_receiver);
+    fprintf(fstats, "packet_duplicated:%d\n", packet_duplicated);
+
+    if (stats_filename != NULL)
+    {
         fclose(fstats);
     }
 

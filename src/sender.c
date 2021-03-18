@@ -3,6 +3,7 @@
 #include "packet_interface.h"
 #include "selective_repeat.h"
 #include "handle_message.h"
+#include <getopt.h>
 
 int item_window_nb = 0;
 int seqnum = 0;
@@ -195,7 +196,8 @@ int main(int argc, char **argv) {
     if (stats_filename != NULL)
     {
         fstats = fopen(stats_filename, "w+");
-        fprintf(fstats,"data_sent:%d\n", data_sent);
+    }
+    fprintf(fstats,"data_sent:%d\n", data_sent);
     fprintf(fstats,"data_received:%d\n", 0);
     fprintf(fstats,"data_truncated_received:%d\n", 0);
     fprintf(fstats,"ack_sent:%d\n", 0);
@@ -206,7 +208,9 @@ int main(int argc, char **argv) {
     fprintf(fstats,"min_rtt:%ld\n", min_rtt/1000);
     fprintf(fstats,"max_rtt:%ld\n", max_rtt/1000);
     fprintf(fstats,"packets_retransmitted:%d\n", packet_retransmitted);
-    fclose(fstats);
+    if (stats_filename != NULL)
+    {
+      fclose(fstats);
     }
 
 

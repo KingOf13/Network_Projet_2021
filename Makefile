@@ -2,12 +2,12 @@
 CC = gcc
 
 # Feel free to add other C flags
-CFLAGS += -c -std=gnu99 -Wall -Werror -Wextra -O2
+CFLAGS += -c -std=c99 -Wall -Werror -Wextra -O2 -D_GNU_SOURCE
 # By default, we colorize the output, but this might be ugly in log files, so feel free to remove the following line.
 CFLAGS += -D_COLOR
 
 # You may want to add something here
-LDFLAGS += -lz
+LDFLAGS += -lz -std=c99
 
 #supp CFILE
 CFILE += src/create_socket.c src/selective_repeat.c src/handle_message.c src/packet_implem.c
@@ -25,10 +25,10 @@ RECEIVER = receiver
 all: $(SENDER) $(RECEIVER)
 
 $(SENDER): $(SENDER_OBJECTS)
-	$(CC) -std=c99 $(SENDER_OBJECTS) $(CFILE) $(LDFLAGS) -o $@
+	$(CC) $(SENDER_OBJECTS) $(CFILE) $(LDFLAGS) -o $@
 
 $(RECEIVER): $(RECEIVER_OBJECTS)
-	$(CC) -std=c99 $(RECEIVER_OBJECTS) $(CFILE) $(LDFLAGS) -o $@
+	$(CC) $(RECEIVER_OBJECTS) $(CFILE) $(LDFLAGS) -o $@
 
 %.o: %.c
 	$(CC) $(CFLAGS) $< $(LDFLAGS) -o $@
@@ -57,8 +57,9 @@ debug: clean all
 ZIP_NAME="../projet1_Mounzer_Aigret.zip"
 
 # A zip target, to help you have a proper zip file. You probably need to adapt this code.
-zip:
+zip: clean
 	# Generate the log file stat now. Try to keep the repository clean.
+	@rm $(ZIP_NAME)
 	@git log --stat > gitlog.stat
 	@zip -r $(ZIP_NAME) Makefile src tests rapport.pdf gitlog.stat
 	# We remove it now, but you can leave it if you want.

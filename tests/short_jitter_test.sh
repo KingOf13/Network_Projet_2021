@@ -28,6 +28,7 @@ if ! ../sender :: 1341 < test.txt 2> sender.log ; then
   err=1  # On enregistre l'erreur
 fi
 
+echo "sleep ..."
 sleep 30 # On attend 30 seconde que le receiver finisse
 
 if kill -0 $receiver_pid &> /dev/null ; then
