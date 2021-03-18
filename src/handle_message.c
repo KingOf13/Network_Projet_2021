@@ -36,7 +36,7 @@ bool process_pkt(pkt_t *pkt, window_receiver_t* window_receiver){
       while (window_receiver->window[place] != NULL){
         //printf("i: %d\n", place);
         pkt_t* win_pack = window_receiver->window[place];
-        //printf("%s", pkt_get_payload(win_pack));
+        printf("%s", pkt_get_payload(win_pack));
         pkt_del(win_pack);
         window_receiver->window[place] = NULL;
         window_receiver->window_val++;
@@ -122,7 +122,6 @@ int receive_and_send_message(int sock, struct sockaddr_in6 cli_addr, window_rece
       
         pkt_set_type(pkt_ack, PTYPE_NACK);
         pkt_set_seqnum(pkt_ack, pkt_get_seqnum(pkt)%256);
-        printf("acksend: %d, %d, %s\n",pkt_get_seqnum(pkt_ack), seqnum_receiver, pkt_get_payload(pkt));
         //nack_sent++;
         data_truncated_received++;
     }

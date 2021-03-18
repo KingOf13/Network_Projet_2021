@@ -152,11 +152,11 @@ int main(int argc, char **argv) {
             if(pkt_ack == NULL){continue;}
             //printf("%d\n", pkt_get_type(pkt_ack));
             if(pkt_get_type(pkt_ack) == PTYPE_NACK){
-                printf("nack: %d\n", pkt_get_seqnum(pkt_ack));
+                //printf("nack: %d\n", pkt_get_seqnum(pkt_ack));
                 nack_received++;
                 resend_nack(pkt_get_seqnum(pkt_ack), window, sock, peer_addr);
             }else if(pkt_get_type(pkt_ack) == PTYPE_ACK){
-                printf("ack: %d\n", pkt_get_seqnum(pkt_ack)-1);
+                //printf("ack: %d\n", pkt_get_seqnum(pkt_ack)-1);
                 ack_received++;
                 item_window_nb = check_ack(window, pkt_get_seqnum(pkt_ack)-1, item_window_nb);
             }else{packet_ignored_by_sender++;}
