@@ -50,18 +50,20 @@ time_t get_rtt_mean(){
 }
 
 int check_ack(window_sender_t* window, int index, int item_window_nb){
-    window->last_ack = index;
+    window->last_ack = index+1;
     while (1)
     {
         if(index < 0){
+            //printf("ind min: %d\n", index);
             index = 30;
         }
-        //printf("index: %d\n", index);
+        
         
         if(window->window[index%MAX_WINDOW_SIZE] == NULL){
-            
+            //
             break;
         }
+        //printf("index: %d\n", index);
         //printf("mod: %d\n", index%32);
         pkt_del(window->window[index%MAX_WINDOW_SIZE]);
         set_min_max_rtt(window->start_time[index%MAX_WINDOW_SIZE]);
@@ -89,10 +91,12 @@ int check_timer(window_sender_t* window, int sock, struct sockaddr_in6 peer_addr
     for (size_t i = 0; i < MAX_WINDOW_SIZE; i++)
     {
         pkt_t* pkt = window->window[i];
-        if(pkt == NULL){continue;}
+        if(pkt == NULL){
+            //printf("%ld\n", i);
+            continue;}
         //printf("%ld, %ld\n", i, clock() - window->start_time[i]);
         time_t max_time = get_rtt_mean();
-        if(max_time == -1 || max_time < 100){max_time = 300;}
+        if(max_time == -1 || max_time < 2000000){max_time = 2000000;}
         //printf("%ld\n", max_time);
         if(clock() - window->start_time[i] > max_time+0.1*max_time){
             //printf("add timer: %d\n", pkt_get_seqnum(pkt));

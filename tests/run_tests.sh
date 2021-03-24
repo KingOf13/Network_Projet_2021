@@ -13,8 +13,6 @@
 ./short_error_test.sh
 { echo "A very simple test, with short delay and small loss"; } 2> /dev/null
 ./short_delay_small_loss_test.sh
-{ echo "A very simple test, with all sort of little imperfection"; } 2> /dev/null
-./short_complete_test.sh
 { echo "A very simple test with binary file"; } 2> /dev/null
 ./simple_binary_test.sh
 { echo "A very simple test with binary file, with short delay"; } 2> /dev/null
@@ -29,6 +27,8 @@
 ./short_error_binary_test.sh
 { echo "A very simple test with binary file, with short delay and small loss"; } 2> /dev/null
 ./short_delay_small_loss_binary_test.sh
+{ echo "A very simple test, with all sort of little imperfection"; } 2> /dev/null
+./short_complete_test.sh
 { echo "A very simple test with binary file, with all sort of little imperfection"; } 2> /dev/null
 ./short_complete_binary_test.sh
 #{ echo "A very simple image test, with short delay and small loss"; } 2> /dev/null

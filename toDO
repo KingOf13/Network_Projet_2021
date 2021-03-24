@@ -1,9 +1,0 @@
-window a 0 si buffer rempli ? coté sender ou receiver? (OK)
-
-
------stat------
-packet duplicate ?? on augmente que dans le cas ou on recoit pas le next seqnum? ou si le seqnum est pas bon aussi?
-
-data_sent du coup puisque pas "valide" c'est toutes les data envoyés ? meme ceux répétés?? pas bcp de sens normalement
-
-

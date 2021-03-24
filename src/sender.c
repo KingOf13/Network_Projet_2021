@@ -111,41 +111,45 @@ int main(int argc, char **argv) {
         pollfd[1].revents = 0;
     }else{
         fp = fopen(filename, "rb");
-        if (fp == NULL){return -1;}
+        if (fp == NULL){
+            ERROR("Error with the file and fopen\n");
+            return -1;
+        }
         pollfd[1].fd = fileno(fp);
         pollfd[1].events = POLLIN;
         pollfd[1].revents = 0;
     }
 
-    int res = 1;
+    int res = MAX_PAYLOAD_SIZE;
     while(1){
         int sock_poll_res = poll(pollfd, 2, 1000);
         if(sock_poll_res < 0){
-            printf("error with poll\n");
+            ERROR("error with poll\n");
         }
-        //printf("%d, %d, %d\n", seqnum, window->last_ack, window_val);
-        if(pollfd[1].revents & POLLIN && res == 1 && seqnum < window->last_ack+window_val){
-            res = fread(line, 512, 1, fp);
+        //printf("%d, %d, %d\n", res, window->last_ack, window_val);
+        if(pollfd[1].revents & POLLIN && res == MAX_PAYLOAD_SIZE && seqnum < window->last_ack+window_val){
+            res = fread(line, 1, MAX_PAYLOAD_SIZE, fp);
+            if(res == 0){continue;}
             pkt_t* pkt = pkt_new();
             pkt_set_type(pkt, PTYPE_DATA);
             pkt_set_tr(pkt, 0);
-            pkt_set_payload(pkt, line, MAX_PAYLOAD_SIZE);
-            //printf("%d, %d, %s", res, seqnum, pkt_get_payload(pkt));
+            pkt_set_payload(pkt, line, res);
+            //printf("%d, %d, %d\n", res, seqnum, item_window_nb);
             pkt_set_window(pkt, window_val);
             pkt_set_timestamp(pkt, 0);
             pkt_set_seqnum(pkt, seqnum);
-            pkt_set_length(pkt, MAX_PAYLOAD_SIZE);
+            pkt_set_length(pkt, res);
             window->window[seqnum%MAX_WINDOW_SIZE] = pkt;
             item_window_nb++;
-            //printf("send: %d\n", seqnum);
+            //printf("send: %d, %d\n", seqnum, seqnum%MAX_WINDOW_SIZE);
             window->start_time[seqnum%MAX_WINDOW_SIZE] = clock();
             while(send_message(sock, pkt, peer_addr) == -1){
                 ERROR("Error while encoding packet %d\n", seqnum);
-                pkt_set_length(pkt, MAX_PAYLOAD_SIZE);
+                pkt_set_length(pkt, res);
                 pkt_set_payload(pkt, line, MAX_PAYLOAD_SIZE);
             }
             seqnum = (seqnum+1)%256;
-            memset(line, 0, MAX_PAYLOAD_SIZE);
+            memset(line, 0, res);
         }
         if(pollfd[0].revents & POLLIN){
             pkt_t* pkt_ack = receive_ack(sock, peer_addr);
@@ -164,7 +168,8 @@ int main(int argc, char **argv) {
             pkt_del(pkt_ack);
         }
         check_timer(window, sock, peer_addr);
-        if(res != 1 && item_window_nb <= 0){break;}
+        //printf("%d\n", item_window_nb);
+        if(res != MAX_PAYLOAD_SIZE && item_window_nb <= 0){break;}
     }
     //printf("last: %d, %d\n", seqnum, window->last_ack);
     if(filename != NULL){fclose(fp);}

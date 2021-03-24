@@ -36,7 +36,9 @@ bool process_pkt(pkt_t *pkt, window_receiver_t* window_receiver){
       while (window_receiver->window[place] != NULL){
         //printf("i: %d\n", place);
         pkt_t* win_pack = window_receiver->window[place];
-        printf("%s", pkt_get_payload(win_pack));
+        //fprintf(stdout, "%s", pkt_get_payload(win_pack));
+        //fwrite(pkt_get_seqnum(win_pack), MAX_PAYLOAD_SIZE, 1, stdout);
+        fwrite(pkt_get_payload(win_pack), pkt_get_length(win_pack), 1, stdout);
         pkt_del(win_pack);
         window_receiver->window[place] = NULL;
         window_receiver->window_val++;
@@ -87,7 +89,7 @@ int receive_and_send_message(int sock, struct sockaddr_in6 cli_addr, window_rece
         return -1;
     }
     //test of missing ack
-    /*if(seqnum == 4 || seqnum == 5 || seqnum == 1 || seqnum == 6){
+    /*if(seqnum % 2 != 0){
       
       return 0;
     }*/
@@ -96,12 +98,12 @@ int receive_and_send_message(int sock, struct sockaddr_in6 cli_addr, window_rece
         packet_ignored_by_receiver++;
         return 0;
     }
-    
+    //printf("%d, %d\n", pkt_get_seqnum(pkt), window_receiver->next_seqnum);
     //printf("lastseq: %d, %d, %d\n", pkt_get_seqnum(pkt), window_receiver->next_seqnum-1, pkt_get_length(pkt));
     pkt_t* pkt_ack = pkt_new();
     //printf("tr: %d\n", pkt_get_tr(pkt));
     if(pkt_get_tr(pkt) == 0){
-      if(pkt_get_type(pkt) == PTYPE_DATA && pkt_get_length(pkt) == 0 && pkt_get_seqnum(pkt) == window_receiver->next_seqnum-1){
+      if(pkt_get_type(pkt) == PTYPE_DATA && pkt_get_length(pkt) == 0 && pkt_get_seqnum(pkt) == window_receiver->next_seqnum){
           //printf("server shutdown\n");
           return -1;
       }

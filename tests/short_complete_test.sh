@@ -25,14 +25,14 @@ cleanup()
 trap cleanup SIGINT  # Kill les process en arrière plan en cas de ^-C
 
 # On démarre le transfert
-if ! ../sender :: 1341 < test.txt 2> sender.log ; then
+if ! ../sender :: 1341 < test.txt 1>sender_file 2> sender.log ; then
   echo "Crash du sender!"
   cat sender.log
   err=1  # On enregistre l'erreur
 fi
 
 echo "sleep ..."
-sleep 60 # On attend 5 seconde que le receiver finisse
+sleep 5 # On attend 5 seconde que le receiver finisse
 
 if kill -0 $receiver_pid &> /dev/null ; then
   echo "Le receiver ne s'est pas arreté à la fin du transfert!"

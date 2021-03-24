@@ -25,13 +25,13 @@ cleanup()
 }
 trap cleanup SIGINT  # Kill les process en arrière plan en cas de ^-C
 # On démarre le transfert
-if ! $valgrind .././sender ::1 12345 < test.txt 2> sender.log ; then
+if ! $valgrind .././sender ::1 12345 < input_file 2> sender.log ; then
   echo "Crash du sender!"
   cat sender.log
   err=1  # On enregistre l'erreur
 fi
 
-sleep 25 # On attend 5 seconde que le receiver finisse
+sleep 5 # On attend 5 seconde que le receiver finisse
 
 if kill -0 $receiver_pid &> /dev/null ; then
   echo "Le receiver ne s'est pas arreté à la fin du transfert!"
@@ -45,7 +45,7 @@ else  # On teste la valeur de retour du receiver
   fi
 fi
 # On vérifie que le transfert s'est bien déroulé
-if [[ "$(md5sum test.txt | awk '{print $1}')" != "$(md5sum received_file | awk '{print $1}')" ]]; then
+if [[ "$(sha1sum input_file | awk '{print $1}')" != "$(sha1sum received_file | awk '{print $1}')" ]]; then
   echo "Le transfert a corrompu le fichier!"
   echo "Diff binaire des deux fichiers: (attendu vs produit)"
   diff -C 9 <(od -Ax -t x1z test.txt) <(od -Ax -t x1z received_file)
