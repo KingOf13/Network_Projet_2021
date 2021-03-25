@@ -137,10 +137,11 @@ pkt_status_code pkt_decode(const char *data, const size_t len, pkt_t *pkt)
       header[0] = header[0]&0b11011111;
       crc1 = crc32(crc1,(const Bytef*) header, 6+offset);
       //printf("second %d, %d\n", CRC1, crc1);
+      free(header);
       if(CRC1!=crc1) {
           return E_CRC;
       }
-      free(header);
+      
   }
   pkt_status_code CRC1_s = pkt_set_crc1(pkt,crc1);
   if(CRC1_s!=PKT_OK) {
@@ -282,7 +283,7 @@ uint16_t pkt_get_length(const pkt_t* pkt)
    return pkt->length;
 }
 
-uint32_t pkt_get_timestamp   (const pkt_t* pkt)
+uint32_t pkt_get_timestamp(const pkt_t* pkt)
 {
     return pkt->timestamp;
 }

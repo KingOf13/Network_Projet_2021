@@ -12,7 +12,7 @@ dd if=/dev/urandom of=input_file bs=1 count=512 &> /dev/null
 link_pid=$!
 
 # On lance le receiver et capture sa sortie standard
-../receiver :: 2456 1>received_file 2> receiver.log&
+../receiver :: 2456 1>received_file 2> receiver.log &
 receiver_pid=$!
 
 cleanup()

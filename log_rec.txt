@@ -1,0 +1,2 @@
+[91m[ERROR] Receiver has following arguments: stats_filename is stats_receiver.csv, listen_ip is ::, listen_port is 12345[0m
+[91m[ERROR] This is not an error, now let's code![0m

@@ -12,7 +12,6 @@ extern int ack_sent;
 extern int nack_sent;
 extern int packet_duplicated;
 extern int packet_ignored_by_receiver;
-int seqnum = 0;
 
 int print_usage(char *prog_name) {
     ERROR("Usage:\n\t%s [-s stats_filename] listen_ip listen_port", prog_name);
@@ -86,7 +85,6 @@ int main(int argc, char **argv) {
     while (1)
     {
         int len = receive_and_send_message(sock, cli_addr, window_buffer);
-        seqnum++;
         if(len == -1){break;}
     }
 

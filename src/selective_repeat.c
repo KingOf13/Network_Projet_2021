@@ -23,7 +23,6 @@ window_receiver_t* init_receiver_window(){
   if (receive_window == NULL) return NULL;
   receive_window->next_seqnum = 0;
   receive_window->window_val = MAX_WINDOW_SIZE;
-  receive_window->window_size = MAX_WINDOW_SIZE;
   for(int i=0; i<MAX_WINDOW_SIZE; i++) {
     receive_window->window[i] = NULL;
   }
@@ -54,13 +53,11 @@ int check_ack(window_sender_t* window, int index, int item_window_nb){
     while (1)
     {
         if(index < 0){
-            //printf("ind min: %d\n", index);
             index = 30;
         }
         
         
         if(window->window[index%MAX_WINDOW_SIZE] == NULL){
-            //
             break;
         }
         //printf("index: %d\n", index);
@@ -91,9 +88,7 @@ int check_timer(window_sender_t* window, int sock, struct sockaddr_in6 peer_addr
     for (size_t i = 0; i < MAX_WINDOW_SIZE; i++)
     {
         pkt_t* pkt = window->window[i];
-        if(pkt == NULL){
-            //printf("%ld\n", i);
-            continue;}
+        if(pkt == NULL){continue;}
         //printf("%ld, %ld\n", i, clock() - window->start_time[i]);
         time_t max_time = get_rtt_mean();
         if(max_time == -1 || max_time < 2000000){max_time = 2000000;}

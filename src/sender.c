@@ -97,7 +97,6 @@ int main(int argc, char **argv) {
     pollfd[0].events = POLLIN;
     pollfd[0].revents = 0;
 
-
     //if no file is given, read the stdin input and send it as message to server (receiver)
     char* line = malloc(sizeof(char)*512);
     //make window init
@@ -126,7 +125,7 @@ int main(int argc, char **argv) {
         if(sock_poll_res < 0){
             ERROR("error with poll\n");
         }
-        //printf("%d, %d, %d\n", res, window->last_ack, window_val);
+        //ERROR("%d, %d, %d\n", seqnum, window->last_ack, window_val);
         if(pollfd[1].revents & POLLIN && res == MAX_PAYLOAD_SIZE && seqnum < window->last_ack+window_val){
             res = fread(line, 1, MAX_PAYLOAD_SIZE, fp);
             if(res == 0){continue;}
@@ -141,7 +140,7 @@ int main(int argc, char **argv) {
             pkt_set_length(pkt, res);
             window->window[seqnum%MAX_WINDOW_SIZE] = pkt;
             item_window_nb++;
-            //printf("send: %d, %d\n", seqnum, seqnum%MAX_WINDOW_SIZE);
+            //ERROR("send: %d, %d\n", seqnum, seqnum%MAX_WINDOW_SIZE);
             window->start_time[seqnum%MAX_WINDOW_SIZE] = clock();
             while(send_message(sock, pkt, peer_addr) == -1){
                 ERROR("Error while encoding packet %d\n", seqnum);
@@ -160,7 +159,7 @@ int main(int argc, char **argv) {
                 nack_received++;
                 resend_nack(pkt_get_seqnum(pkt_ack), window, sock, peer_addr);
             }else if(pkt_get_type(pkt_ack) == PTYPE_ACK){
-                //printf("ack: %d\n", pkt_get_seqnum(pkt_ack)-1);
+                //ERROR("ack: %d\n", pkt_get_seqnum(pkt_ack)-1);
                 ack_received++;
                 item_window_nb = check_ack(window, pkt_get_seqnum(pkt_ack)-1, item_window_nb);
             }else{packet_ignored_by_sender++;}
@@ -182,7 +181,6 @@ int main(int argc, char **argv) {
     /*************
      * end file handling
      * **********/
-    data_sent--;
     /*for (size_t i = 0; i < 32; i++)
     {
        // printf("OUI\n");
@@ -226,17 +224,9 @@ int main(int argc, char **argv) {
     /*************
      * given test + debug part
      * **********/
-
-    ASSERT(1 == 1); // Try to change it to see what happens when it fails
-    DEBUG_DUMP("Some bytes", 11); // You can use it with any pointer type
-
     // This is not an error per-se.
     ERROR("Sender has following arguments: filename is %s, stats_filename is %s, receiver_ip is %s, receiver_port is %u",
         filename, stats_filename, receiver_ip, receiver_port);
-
-    DEBUG("You can only see me if %s", "you built me using `make debug`");
-    ERROR("This is not an error, %s", "now let's code!");
-
     // Now let's code!
     /*************
      * end given test + debug part
