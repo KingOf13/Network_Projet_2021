@@ -106,6 +106,9 @@ int receive_and_send_message(int sock, struct sockaddr_in6 cli_addr, window_rece
     //printf("tr: %d\n", pkt_get_tr(pkt));
     if(pkt_get_tr(pkt) == 0){
       if(pkt_get_type(pkt) == PTYPE_DATA && pkt_get_length(pkt) == 0 && pkt_get_seqnum(pkt) == window_receiver->next_seqnum){
+          pkt_set_length(pkt_ack, 0);
+          pkt_set_seqnum(pkt_ack, pkt_get_seqnum(pkt));
+          send_message(sock, pkt_ack, cli_addr);
           pkt_del(pkt_ack);
           pkt_del(pkt);
           return -1;

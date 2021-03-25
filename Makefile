@@ -73,4 +73,4 @@ run:
 	@./src/receiver -s src/stats_receiver.csv :: 12345 1>src/receive_file 2>log_rec.txt & ./src/sender ::1 12345 -f src/test.txt -s src/stats_sender.csv 1>src/sender_file 2>log_sen.txt
 
 glob:
-	@./receiver -s stats_receiver.csv :: 12345 1>receive_file 2>log_rec.txt & ./sender ::1 12345 -f src/test.txt -s stats_sender.csv 1>sender_file 2>log_sen.txt
+	@ valgrind --leak-check=full ./receiver -s stats_receiver.csv :: 12345 1>receive_file 2>log_rec.txt & valgrind --leak-check=full  ./sender ::1 12345 -f src/test.txt -s stats_sender.csv 1>sender_file 2>log_sen.txt

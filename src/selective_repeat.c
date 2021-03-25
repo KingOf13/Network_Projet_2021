@@ -70,7 +70,6 @@ int check_ack(window_sender_t* window, int index, int item_window_nb){
         window->window[index%MAX_WINDOW_SIZE] = NULL;
         index--;
         item_window_nb--;
-        //printf("win: %d\n", item_window_nb);
     }
     return item_window_nb;
     

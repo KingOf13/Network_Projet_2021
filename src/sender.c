@@ -98,7 +98,7 @@ int main(int argc, char **argv) {
     pollfd[0].revents = 0;
 
     //if no file is given, read the stdin input and send it as message to server (receiver)
-    char* line = malloc(sizeof(char)*512);
+    char line[512];
     //make window init
     window_sender_t* window = window_sender_init();
     FILE* fp;
@@ -189,7 +189,6 @@ int main(int argc, char **argv) {
        }
     }*/
     free(window);
-    free(line);
     close(sock);
 
     /*************

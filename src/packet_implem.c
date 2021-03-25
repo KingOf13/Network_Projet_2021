@@ -18,8 +18,6 @@ pkt_t* pkt_new()
     new->seqnum = 0;
     new->timestamp = 0;
     new->crc1 = 0;
-    new->payload = malloc(sizeof(char)*MAX_PAYLOAD_SIZE);
-    if(new->payload == NULL){return NULL;}
     new->payload = NULL;
     return new;
 }
