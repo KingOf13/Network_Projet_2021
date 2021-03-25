@@ -53,6 +53,9 @@ link :
 debug: CFLAGS += -D_DEBUG
 debug: clean all
 
+csv:
+	@cd tests && ./make_csv.sh
+
 # Place the zip in the parent repository of the project
 ZIP_NAME="../projet1_Mounzer_Aigret.zip"
 
