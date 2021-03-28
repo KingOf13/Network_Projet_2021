@@ -1,3 +1,1 @@
 ; Simple; Delayed; Jittered; With loss; Cut; Error; Complete
-1; ./make_csv.sh: ligne 14: 0 : commande introuvable
-0m0,002s; 0m0,350s; 0m0,380s; 0m0,520s; 0m0,008s; 0m2,470s; 0m2,981s

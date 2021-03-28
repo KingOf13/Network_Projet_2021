@@ -14,6 +14,7 @@ for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
   simple_time="$(TIMEFORMAT='%lU'; time ( ./param_test.sh $simple >/dev/null) 2>&1)"
   ret=$?
   if [ ret == 1 ]; then
+    echo "Test n°$i failed (simple)"
     simple_time=Fail
   fi
   echo "$i; $simple_time" >> ../datas/simple.csv
@@ -21,6 +22,7 @@ for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
   delayed_time="$(TIMEFORMAT='%lU'; time ( ./param_test.sh $delay >/dev/null) 2>&1)"
   ret=$?
   if [ ret == 1 ]; then
+    echo "Test n°$i failed(delay)"
     delayed_time=Fail
   fi
   echo "$i; $delayed_time" >> ../datas/delayed.csv
@@ -28,6 +30,7 @@ for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
   jittered_time="$(TIMEFORMAT='%lU'; time ( ./param_test.sh $jitter >/dev/null) 2>&1)"
   ret=$?
   if [ ret == 1 ]; then
+    echo "Test n°$i failed (jitter)"
     jittered_time=Fail
   fi
   echo "$i; $jittered_time" >> ../datas/jittered.csv
@@ -35,6 +38,7 @@ for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
   lost_time="$(TIMEFORMAT='%lU'; time ( ./param_test.sh $loss >/dev/null) 2>&1)"
   ret=$?
   if [ ret == 1 ]; then
+    echo "Test n°$i failed (loss)"
     lost_time=Fail
   fi
   echo "$i; $lost_time" >> ../datas/loss.csv
@@ -42,6 +46,7 @@ for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
   cut_time="$(TIMEFORMAT='%lU'; time ( ./param_test.sh $cut >/dev/null) 2>&1)"
   ret=$?
   if [ ret == 1 ]; then
+    echo "Test n°$i failed (cut)"
     cut_time=Fail
   fi
   echo "$i; $cut_time" >> ../datas/cut.csv
@@ -49,6 +54,7 @@ for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
   errored_time="$(TIMEFORMAT='%lU'; time ( ./param_test.sh $error >/dev/null) 2>&1)"
   ret=$?
   if [ ret == 1 ]; then
+    echo "Test n°$i failed (error)"
     errored_time=Fail
   fi
   echo "$i; $errored_time" >> ../datas/error.csv
@@ -56,6 +62,7 @@ for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
   complete_time="$(TIMEFORMAT='%lU'; time ( ./param_test.sh $complete >/dev/null) 2>&1)"
   ret=$?
   if [ ret == 1 ]; then
+    echo "Test n°$i failed (complete)"
     complete_time=Fail
   fi
   echo "$i; $complete_time" >> ../datas/complete.csv
