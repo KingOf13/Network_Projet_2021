@@ -7,5 +7,5 @@ nack_sent:0
 nack_received:0
 packet_ignored:0
 min_rtt:1
-max_rtt:56
+max_rtt:58
 packets_retransmitted:0

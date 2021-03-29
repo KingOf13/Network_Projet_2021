@@ -1,4 +1,5 @@
 #include "handle_message.h"
+#include "log.h"
 int data_sent = 0;
 int data_received = 0;
 int data_truncated_received = 0;
@@ -39,6 +40,7 @@ bool process_pkt(pkt_t *pkt, window_receiver_t* window_receiver){
         //fprintf(stdout, "%s", pkt_get_payload(win_pack));
         //fwrite(pkt_get_seqnum(win_pack), MAX_PAYLOAD_SIZE, 1, stdout);
         fwrite(pkt_get_payload(win_pack), pkt_get_length(win_pack), 1, stdout);
+        fflush(stdout);
         pkt_del(win_pack);
         window_receiver->window[place] = NULL;
         window_receiver->window_val++;
@@ -76,7 +78,6 @@ pkt_t* receive_ack(int sock, struct sockaddr_in6  peer_addr){
     }
     int status = pkt_decode(buf, 528, pkt);
     if(status != PKT_OK){
-      pkt_del(pkt);
       return NULL;
     }
     return pkt;
@@ -84,7 +85,7 @@ pkt_t* receive_ack(int sock, struct sockaddr_in6  peer_addr){
 
 
 
-//receive message from sender (client) and send message back (-> still don't know how to separe them)
+//receive message from sender (client) and send message back
 int receive_and_send_message(int sock, struct sockaddr_in6 cli_addr, window_receiver_t* window_receiver){
     char buffer[528];
     pkt_t* pkt = pkt_new();
@@ -119,6 +120,7 @@ int receive_and_send_message(int sock, struct sockaddr_in6 cli_addr, window_rece
             pkt_del(pkt);
         }
         pkt_set_type(pkt_ack, PTYPE_ACK);
+        ERROR("%d\n", window_receiver->next_seqnum);
         pkt_set_seqnum(pkt_ack, window_receiver->next_seqnum);
         }else{
             packet_ignored_by_receiver++;

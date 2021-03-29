@@ -140,10 +140,10 @@ int main(int argc, char **argv) {
             pkt_set_length(pkt, res);
             window->window[seqnum%MAX_WINDOW_SIZE] = pkt;
             item_window_nb++;
-            //ERROR("send: %d, %d\n", seqnum, seqnum%MAX_WINDOW_SIZE);
+            ERROR("send: %d, %d\n", seqnum, seqnum%MAX_WINDOW_SIZE);
             window->start_time[seqnum%MAX_WINDOW_SIZE] = clock();
             while(send_message(sock, pkt, peer_addr) == -1){
-                ERROR("Error while encoding packet %d\n", seqnum);
+                //ERROR("Error while encoding packet %d\n", seqnum);
                 pkt_set_length(pkt, res);
                 pkt_set_payload(pkt, line, MAX_PAYLOAD_SIZE);
             }
@@ -152,14 +152,17 @@ int main(int argc, char **argv) {
         }
         if(pollfd[0].revents & POLLIN){
             pkt_t* pkt_ack = receive_ack(sock, peer_addr);
-            if(pkt_ack == NULL){continue;}
+            if(pkt_ack == NULL || pkt_get_seqnum(pkt_ack) < window->last_ack){
+                pkt_del(pkt_ack);
+                continue;
+            }
             //printf("%d\n", pkt_get_type(pkt_ack));
             if(pkt_get_type(pkt_ack) == PTYPE_NACK){
                 //printf("nack: %d\n", pkt_get_seqnum(pkt_ack));
                 nack_received++;
                 resend_nack(pkt_get_seqnum(pkt_ack), window, sock, peer_addr);
             }else if(pkt_get_type(pkt_ack) == PTYPE_ACK){
-                //ERROR("ack: %d\n", pkt_get_seqnum(pkt_ack)-1);
+                ERROR("ack: %d, %d\n", pkt_get_seqnum(pkt_ack)-1, seqnum);
                 ack_received++;
                 item_window_nb = check_ack(window, pkt_get_seqnum(pkt_ack)-1, item_window_nb);
             }else{packet_ignored_by_sender++;}
