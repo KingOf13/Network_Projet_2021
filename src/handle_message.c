@@ -1,5 +1,6 @@
 #include "handle_message.h"
 #include "log.h"
+#include "selective_repeat.h"
 int data_sent = 0;
 int data_received = 0;
 int data_truncated_received = 0;
@@ -54,6 +55,7 @@ bool process_pkt(pkt_t *pkt, window_receiver_t* window_receiver){
       int place = pkt_get_seqnum(pkt) % MAX_WINDOW_SIZE;
       if (window_receiver->window[place] != NULL){
         packet_duplicated++;
+        packet_ignored_by_receiver++;
         return false;
       } 
       else {
@@ -95,7 +97,9 @@ int receive_and_send_message(int sock, struct sockaddr_in6 cli_addr, window_rece
         return -1;
     }
     int decode_status = pkt_decode(buffer, 528, pkt);
-    if(decode_status != PKT_OK){
+    time_t mean_rtt = get_rtt_mean();
+    if(mean_rtt == -1){mean_rtt = 20000000000000000;}
+    if(decode_status != PKT_OK || (clock() - pkt_get_timestamp(pkt)) > mean_rtt*3){
         packet_ignored_by_receiver++;
         pkt_del(pkt);
         return 0;
@@ -120,7 +124,6 @@ int receive_and_send_message(int sock, struct sockaddr_in6 cli_addr, window_rece
             pkt_del(pkt);
         }
         pkt_set_type(pkt_ack, PTYPE_ACK);
-        ERROR("%d\n", window_receiver->next_seqnum);
         pkt_set_seqnum(pkt_ack, window_receiver->next_seqnum);
         }else{
             packet_ignored_by_receiver++;

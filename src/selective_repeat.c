@@ -1,5 +1,5 @@
 #include "selective_repeat.h"
-
+#include "log.h"
 int packet_retransmitted = 0;
 time_t min_rtt = 100000000;
 time_t max_rtt = 0;
@@ -90,10 +90,12 @@ int check_timer(window_sender_t* window, int sock, struct sockaddr_in6 peer_addr
         if(pkt == NULL){continue;}
         //printf("%ld, %ld\n", i, clock() - window->start_time[i]);
         time_t max_time = get_rtt_mean();
-        if(max_time == -1 || max_time < 2000000){max_time = 2000000;}
+        
+        if(max_time == -1){max_time = 2000000;}
+        else{max_time = max_time+max_time*0.25;}
         //printf("%ld\n", max_time);
-        if(clock() - window->start_time[i] > max_time+0.1*max_time){
-            //printf("add timer: %d\n", pkt_get_seqnum(pkt));
+        if(clock() - window->start_time[i] > max_time){
+            //ERROR("add timer: %d, %ld, %ld\n", pkt_get_seqnum(pkt), clock() - window->start_time[i], max_time);
             window->start_time[i] = clock();
             send_message(sock, pkt, peer_addr);
             packet_retransmitted++;

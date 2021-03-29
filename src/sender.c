@@ -135,13 +135,13 @@ int main(int argc, char **argv) {
             pkt_set_payload(pkt, line, res);
             //printf("%d, %d, %d\n", res, seqnum, item_window_nb);
             pkt_set_window(pkt, window_val);
-            pkt_set_timestamp(pkt, 0);
             pkt_set_seqnum(pkt, seqnum);
             pkt_set_length(pkt, res);
             window->window[seqnum%MAX_WINDOW_SIZE] = pkt;
             item_window_nb++;
-            ERROR("send: %d, %d\n", seqnum, seqnum%MAX_WINDOW_SIZE);
+            //ERROR("send: %d, %d\n", seqnum, seqnum%MAX_WINDOW_SIZE);
             window->start_time[seqnum%MAX_WINDOW_SIZE] = clock();
+            pkt_set_timestamp(pkt, window->start_time[seqnum%MAX_WINDOW_SIZE]);
             while(send_message(sock, pkt, peer_addr) == -1){
                 //ERROR("Error while encoding packet %d\n", seqnum);
                 pkt_set_length(pkt, res);
@@ -162,7 +162,7 @@ int main(int argc, char **argv) {
                 nack_received++;
                 resend_nack(pkt_get_seqnum(pkt_ack), window, sock, peer_addr);
             }else if(pkt_get_type(pkt_ack) == PTYPE_ACK){
-                ERROR("ack: %d, %d\n", pkt_get_seqnum(pkt_ack)-1, seqnum);
+                //ERROR("ack: %d, %d\n", pkt_get_seqnum(pkt_ack)-1, seqnum);
                 ack_received++;
                 item_window_nb = check_ack(window, pkt_get_seqnum(pkt_ack)-1, item_window_nb);
             }else{packet_ignored_by_sender++;}
